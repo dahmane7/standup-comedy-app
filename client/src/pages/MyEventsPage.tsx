@@ -72,7 +72,7 @@ function MyEventsPage() {
       const list = Array.isArray(res.data) ? res.data : (Array.isArray((res.data as any)?.events) ? (res.data as any).events : []);
       console.log("MyEventsPage: Données d'événements reçues par useQuery:", list);
       console.log("MyEventsPage: User role:", user?.role);
-      console.log("📅 DÉTAIL DES DATES RÉCUPÉRÉES:", list.map(e => ({
+      console.log("📅 DÉTAIL DES DATES RÉCUPÉRÉES:", list.map((e: IEvent) => ({
         title: e.title,
         status: e.status,
         dateOriginale: e.date,
