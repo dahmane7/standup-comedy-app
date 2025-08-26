@@ -681,7 +681,7 @@ function MyEventsPage() {
                 </label>
                 <select
                   value={new URLSearchParams(location.search).get('organizer') || ''}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                     const params = new URLSearchParams(location.search);
                     if (e.target.value) {
                       params.set('organizer', e.target.value);
@@ -722,7 +722,7 @@ function MyEventsPage() {
                     type="text"
                     placeholder="Ville, adresse ou salle..."
                     value={new URLSearchParams(location.search).get('location') || ''}
-                                      onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const params = new URLSearchParams(location.search);
                     if (e.target.value) {
                       params.set('location', e.target.value);
@@ -774,7 +774,7 @@ function MyEventsPage() {
           <h2 style={sectionTitleStyle}>Événements à venir</h2>
           <select
             value={completionFilter}
-            onChange={e => setCompletionFilter(e.target.value as 'all' | 'complete' | 'incomplete')}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCompletionFilter(e.target.value as 'all' | 'complete' | 'incomplete')}
             style={{ marginLeft: 'auto', padding: '8px', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', minWidth: 160 }}
           >
             <option value="all">Tous</option>
@@ -810,7 +810,7 @@ function MyEventsPage() {
             {user?.role === 'COMEDIAN' && (
               <div style={actionButtonContainerStyle}>
                 <button 
-                  onClick={(e) => { e.stopPropagation(); handleApplyClick(event); }}
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleApplyClick(event); }}
                   style={
                     (appliedEventIds.has(event._id) || (event.participants?.length || 0) >= event.requirements.maxPerformers)
                       ? disabledApplyButtonStyle 
@@ -844,13 +844,13 @@ function MyEventsPage() {
             {user?.role === 'ORGANIZER' && (
               <div style={actionButtonContainerStyle}>
                 <button 
-                  onClick={(e) => { e.stopPropagation(); handleEditClick(event); }}
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleEditClick(event); }}
                   style={editButtonStyle}
                 >
                   Modifier
                 </button>
                 <button 
-                  onClick={(e) => { e.stopPropagation(); handleDeleteEvent(event._id); }}
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleDeleteEvent(event._id); }}
                   style={deleteButtonStyle}
                 >
                   Supprimer
@@ -894,7 +894,7 @@ function MyEventsPage() {
             {user?.role === 'COMEDIAN' && (
               <div style={actionButtonContainerStyle}>
                 <button 
-                  onClick={(e) => { e.stopPropagation(); handleApplyClick(event); }}
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleApplyClick(event); }}
                   style={{
                     ...applyButtonStyle,
                     ...(appliedEventIds.has(event._id) || 
@@ -941,13 +941,13 @@ function MyEventsPage() {
             {user?.role === 'ORGANIZER' && (
               <div style={actionButtonContainerStyle}>
                 <button 
-                  onClick={(e) => { e.stopPropagation(); handleEditClick(event); }}
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleEditClick(event); }}
                   style={editButtonStyle}
                 >
                   Modifier
                 </button>
                 <button 
-                  onClick={(e) => { e.stopPropagation(); handleDeleteEvent(event._id); }}
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleDeleteEvent(event._id); }}
                   style={deleteButtonStyle}
                 >
                   Supprimer
