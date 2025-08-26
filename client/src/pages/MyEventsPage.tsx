@@ -1054,14 +1054,14 @@ function MyEventsPage() {
                                   transition: 'all 0.3s ease',
                                   marginLeft: '10px'
                                 }}
-                                onClick={(e) => {
+                                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                                   e.stopPropagation();
                                   handleAbsenceClick(participant, selectedEvent);
                                 }}
-                                onMouseEnter={(e) => {
+                                onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
                                   e.currentTarget.style.opacity = '0.8';
                                 }}
-                                onMouseLeave={(e) => {
+                                onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
                                   e.currentTarget.style.opacity = '1';
                                 }}
                               >
