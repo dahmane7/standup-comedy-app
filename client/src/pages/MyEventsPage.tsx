@@ -6,7 +6,7 @@ import EditEventForm from '../components/EditEventForm';
 import ApplyToEventForm from '../components/ApplyToEventForm';
 import ComedianDetailsModal from '../components/ComedianDetailsModal';
 import AbsenceModal from '../components/AbsenceModal';
-import axios from 'axios';
+import api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import type { IEvent } from '../types/event';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -63,22 +63,23 @@ function MyEventsPage() {
       };
       // Pour les humoristes, récupérer TOUS les événements
       // Pour les organisateurs, récupérer seulement leurs événements
-      const apiUrl = user?.role === 'ORGANIZER' 
-        ? `/api/events?organizerId=${user._id}` 
-        : `/api/events`; // Pas de filtre organizerId pour les humoristes
+      const apiUrl = user?.role === 'ORGANIZER'
+        ? `/events?organizerId=${user._id}`
+        : `/events`; // Pas de filtre organizerId pour les humoristes
       
       console.log(`🔗 Requête API: ${apiUrl} (Role: ${user?.role})`);
-      const res = await axios.get<IEvent[]>(apiUrl, config);
-      console.log("MyEventsPage: Données d'événements reçues par useQuery:", res.data);
+      const res = await api.get<IEvent[]>(apiUrl, config);
+      const list = Array.isArray(res.data) ? res.data : (Array.isArray((res.data as any)?.events) ? (res.data as any).events : []);
+      console.log("MyEventsPage: Données d'événements reçues par useQuery:", list);
       console.log("MyEventsPage: User role:", user?.role);
-      console.log("📅 DÉTAIL DES DATES RÉCUPÉRÉES:", res.data.map(e => ({ 
-        title: e.title, 
-        status: e.status, 
+      console.log("📅 DÉTAIL DES DATES RÉCUPÉRÉES:", list.map(e => ({
+        title: e.title,
+        status: e.status,
         dateOriginale: e.date,
         dateParsee: new Date(e.date).toLocaleDateString('fr-FR'),
         estPasse: new Date(e.date) < new Date()
       })));
-      return res.data;
+      return list as IEvent[];
     },
     enabled: true, // Temporairement forcé pour debug
     staleTime: 5 * 60 * 1000,
@@ -97,8 +98,9 @@ function MyEventsPage() {
           Authorization: `Bearer ${token}`,
         },
       };
-      const res = await axios.get<IApplication[]>(`/api/applications?comedianId=${user._id}`, config); // Fetch applications for the comedian
-      return res.data;
+      const res = await api.get<IApplication[]>(`/applications?comedianId=${user._id}`, config);
+      const list = Array.isArray(res.data) ? res.data : (Array.isArray((res.data as any)?.applications) ? (res.data as any).applications : []);
+      return list as IApplication[];
     },
     enabled: user?.role === 'COMEDIAN' && isQueryEnabled, // Only enable for comedians
     staleTime: 5 * 60 * 1000,
@@ -322,7 +324,7 @@ function MyEventsPage() {
             Authorization: `Bearer ${token}`,
           },
         };
-        await axios.delete(`/api/events/${eventId}`, config);
+        await api.delete(`/events/${eventId}`, config);
         alert("Événement supprimé avec succès !");
         refetch();
         refreshUser();
