@@ -1,6 +1,6 @@
 import { type CSSProperties, useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
-import axios from 'axios';
+import api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ApplicationDetailsModal from '../components/ApplicationDetailsModal';
@@ -81,9 +81,11 @@ function ApplicationsPage() {
         },
       };
 
-      let apiUrl = '/api/applications';
-      const res = await axios.get<IApplication[]>(apiUrl, config);
-      setApplications(res.data);
+      const res = await api.get<IApplication[]>('/applications', config);
+      const list = Array.isArray(res.data)
+        ? res.data
+        : (Array.isArray((res.data as any)?.applications) ? (res.data as any).applications : []);
+      setApplications(list);
     } catch (err: any) {
       console.error('Erreur lors de la récupération des candidatures:', err.response?.data || err.message);
       setError(err.response?.data?.message || 'Échec de la récupération des candidatures.');
@@ -119,7 +121,7 @@ function ApplicationsPage() {
           Authorization: `Bearer ${token}`,
         },
       };
-      await axios.put(`/api/applications/${statusAppId}/status`, { status: statusToSet, organizerMessage: statusMessage }, config);
+      await api.put(`/applications/${statusAppId}/status`, { status: statusToSet, organizerMessage: statusMessage }, config);
       alert(`Candidature ${statusToSet === 'ACCEPTED' ? 'acceptée' : 'refusée'} avec succès !`);
       fetchApplications();
       refreshUser();
