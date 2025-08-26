@@ -308,12 +308,12 @@ const DirectoryPage: React.FC = () => {
             type="text"
             placeholder="Rechercher par nom, email, nom de scène..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
             style={inputStyle}
           />
           <select
             value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRoleFilter(e.target.value)}
             style={selectStyle}
           >
             <option value="all">Tous les rôles</option>

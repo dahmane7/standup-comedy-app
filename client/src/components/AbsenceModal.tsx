@@ -157,7 +157,7 @@ function AbsenceModal({
             <textarea
               style={textareaStyle}
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReason(e.target.value)}
               placeholder="Précisez la raison de l'absence (ex: maladie, urgence personnelle, etc.)"
               maxLength={500}
             />

@@ -227,7 +227,7 @@ function CreateEventForm({ onClose, onEventCreated }: CreateEventFormProps) {
   };
 
   return (
-    <div style={modalStyle} onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div style={modalStyle} onClick={(e: React.MouseEvent<HTMLDivElement>) => e.target === e.currentTarget && onClose()}>
       <div style={formStyle}>
         {/* Header */}
         <div style={headerStyle}>

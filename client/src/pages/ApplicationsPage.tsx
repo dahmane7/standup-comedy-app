@@ -420,8 +420,8 @@ function ApplicationsPage() {
                 </div>
                 {user?.role === 'ORGANIZER' && app.status === 'PENDING' && (
                   <div style={{ marginTop: '15px' }}>
-                    <button style={acceptButtonStyle} onClick={(e) => { e.stopPropagation(); openStatusModal(app._id, 'ACCEPTED'); }}>Accepter</button>
-                    <button style={rejectButtonStyle} onClick={(e) => { e.stopPropagation(); openStatusModal(app._id, 'REJECTED'); }}>Refuser</button>
+                    <button style={acceptButtonStyle} onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); openStatusModal(app._id, 'ACCEPTED'); }}>Accepter</button>
+                    <button style={rejectButtonStyle} onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); openStatusModal(app._id, 'REJECTED'); }}>Refuser</button>
                   </div>
                 )}
               </div>
