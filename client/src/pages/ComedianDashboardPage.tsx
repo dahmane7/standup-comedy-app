@@ -1,7 +1,7 @@
 import { type CSSProperties, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../hooks/useAuth';
-import axios from 'axios';
+import api from '../services/api';
 import { useQuery } from '@tanstack/react-query';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -20,8 +20,9 @@ function ComedianDashboardPage() {
     queryFn: async () => {
       if (!token || !user?._id) return [];
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      const res = await axios.get('/api/applications?comedianId=' + user._id, config);
-      return res.data;
+      const res = await api.get('/applications?comedianId=' + user._id, config);
+      const list = Array.isArray(res.data) ? res.data : (Array.isArray((res.data as any)?.applications) ? (res.data as any).applications : []);
+      return list;
     },
     enabled: !!token && !!user?._id,
     staleTime: 0,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, type CSSProperties } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import type { IEvent } from '../types/event';
 
@@ -31,7 +31,7 @@ function ApplyToEventForm({ event, onClose, onApplicationSubmitted }: ApplyToEve
             Authorization: `Bearer ${token}`,
           },
         };
-        const response = await axios.get<{ hasApplied: boolean }>(`/api/applications/check/${event._id}/${comedianId}`, config);
+        const response = await api.get<{ hasApplied: boolean }>(`/applications/check/${event._id}/${comedianId}`, config);
         setHasApplied(response.data.hasApplied);
       } catch (error) {
         console.error('Erreur lors de la vérification de candidature:', error);

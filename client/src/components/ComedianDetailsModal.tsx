@@ -1,7 +1,7 @@
 import { type CSSProperties, useState, useEffect } from 'react';
 import Modal from './Modal';
 import type { IUserData } from '../types/user';
-import axios from 'axios';
+import api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 
 interface ComedianDetailsModalProps {
@@ -51,11 +51,11 @@ function ComedianDetailsModal({ isOpen, onClose, comedian }: ComedianDetailsModa
           });
 
           // Pour un super admin, récupérer toutes les candidatures et filtrer côté client
-          const response = await axios.get('/api/applications', {
+          const response = await api.get('/applications', {
             headers: { Authorization: `Bearer ${token}` }
           });
           
-          const allApplications = response.data;
+          const allApplications = Array.isArray(response.data) ? response.data : (Array.isArray((response.data as any)?.applications) ? (response.data as any).applications : []);
           console.log('📊 Toutes les applications reçues:', allApplications);
           console.log('📊 Nombre total d\'applications:', allApplications.length);
           
@@ -112,7 +112,7 @@ function ComedianDetailsModal({ isOpen, onClose, comedian }: ComedianDetailsModa
             comedianName: `${comedian.firstName} ${comedian.lastName}`
           });
 
-          const response = await axios.get(`/api/absences/comedian/${comedian._id}`, {
+          const response = await api.get(`/absences/comedian/${comedian._id}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           

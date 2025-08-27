@@ -1,7 +1,7 @@
 import { type CSSProperties, useState, useEffect } from 'react';
 import Modal from './Modal';
 import { useAuth } from '../hooks/useAuth';
-import axios from 'axios';
+import api from '../services/api';
 
 interface ComedianApplicationsModalProps {
   isOpen: boolean;
@@ -60,11 +60,11 @@ function ComedianApplicationsModal({ isOpen, onClose, comedian }: ComedianApplic
     try {
       console.log('🔍 Récupération des candidatures pour:', comedian.firstName, comedian.lastName);
       
-      const response = await axios.get('/api/applications', {
+      const response = await api.get('/applications', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      const allApplications = response.data;
+      const allApplications = Array.isArray(response.data) ? response.data : (Array.isArray((response.data as any)?.applications) ? (response.data as any).applications : []);
       console.log('📊 Toutes les applications:', allApplications);
       
       // Filtrer pour ce humoriste spécifique
