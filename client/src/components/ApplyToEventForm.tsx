@@ -49,7 +49,7 @@ function ApplyToEventForm({ event, onClose, onApplicationSubmitted }: ApplyToEve
           Authorization: `Bearer ${token}`,
         },
       };
-      const response = await axios.post('/api/applications', applicationData, config);
+      const response = await api.post('/applications', applicationData, config);
       return response.data;
     },
     onSuccess: () => {
