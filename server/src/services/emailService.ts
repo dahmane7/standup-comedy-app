@@ -1,12 +1,13 @@
 import nodemailer from 'nodemailer';
 import { UserModel } from '../models/User';
+import { config } from '../config/env';
 
 // Configuration du transporteur d'emails
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: config.email.smtpUser,
+    pass: config.email.smtpPass,
   },
 });
 
@@ -14,8 +15,8 @@ export const sendApplicationNotificationToOrganizer = async (eventData: any, hum
   try {
     console.log('📬 Service Email: Notification candidature à l\'organisateur...');
     console.log('📧 Variables EMAIL disponibles:', {
-      EMAIL_USER: process.env.EMAIL_USER ? 'Configuré' : 'MANQUANT',
-      EMAIL_PASS: process.env.EMAIL_PASS ? 'Configuré' : 'MANQUANT'
+      SMTP_USER: config.email.smtpUser ? 'Configuré' : 'MANQUANT',
+      SMTP_PASS: config.email.smtpPass ? 'Configuré' : 'MANQUANT'
     });
 
     // Préparer le contenu de l'email pour l'organisateur
@@ -336,7 +337,7 @@ export const sendApplicationNotificationToOrganizer = async (eventData: any, hum
     `;
 
     const mailOptions = {
-      from: `"${humoristData.firstName} ${humoristData.lastName}" <${process.env.EMAIL_USER}>`,
+              from: `"${humoristData.firstName} ${humoristData.lastName}" <${config.email.smtpUser}>`,
       replyTo: humoristData.email, // Les réponses iront directement à l'humoriste
       to: organizerData.email,
       subject: subject,
@@ -358,8 +359,8 @@ export const sendNewEventNotificationToHumorists = async (eventData: any, organi
   try {
     console.log('📬 Service Email: Début de la fonction d\'envoi...');
     console.log('📧 Variables EMAIL disponibles:', {
-      EMAIL_USER: process.env.EMAIL_USER ? 'Configuré' : 'MANQUANT',
-      EMAIL_PASS: process.env.EMAIL_PASS ? 'Configuré' : 'MANQUANT'
+      SMTP_USER: config.email.smtpUser ? 'Configuré' : 'MANQUANT',
+      SMTP_PASS: config.email.smtpPass ? 'Configuré' : 'MANQUANT'
     });
     
     // Récupérer tous les humoristes de la plateforme
@@ -633,7 +634,7 @@ export const sendNewEventNotificationToHumorists = async (eventData: any, organi
             </div>
             ` : ''}
             
-            <a href="http://localhost:5173/events" class="cta-button">
+            <a href="https://standup-comedy-app.netlify.app/events" class="cta-button">
                 🚀 Postuler Maintenant
             </a>
             
@@ -654,7 +655,7 @@ export const sendNewEventNotificationToHumorists = async (eventData: any, organi
     // Envoyer l'email à tous les humoristes avec l'organisateur en reply-to
     const emailPromises = humorists.map(humorist => {
       const mailOptions = {
-        from: `"${organizerData.firstName} ${organizerData.lastName}" <${process.env.EMAIL_USER}>`,
+        from: `"${organizerData.firstName} ${organizerData.lastName}" <${config.email.smtpUser}>`,
         replyTo: organizerData.email, // Les réponses iront directement à l'organisateur
         to: humorist.email,
         subject: subject,
@@ -717,7 +718,7 @@ export const sendApplicationStatusToComedian = async (
   `;
 
   const mailOptions = {
-    from: `"${organizer.firstName} ${organizer.lastName}" <${process.env.EMAIL_USER}>`,
+    from: `"${organizer.firstName} ${organizer.lastName}" <${config.email.smtpUser}>`,
     to: comedian.email,
     subject,
     html: htmlContent,

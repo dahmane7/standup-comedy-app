@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import nodemailer from 'nodemailer';
+import { config } from '../config/env';
 
 const router = express.Router();
 
@@ -7,8 +8,8 @@ const router = express.Router();
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: config.email.smtpUser,
+    pass: config.email.smtpPass,
   },
 });
 
@@ -18,7 +19,7 @@ router.post('/send', async (req: Request, res: Response) => {
     const { to, subject, text } = req.body;
 
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: config.email.smtpUser,
       to,
       subject,
       text,
