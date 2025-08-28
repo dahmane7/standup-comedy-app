@@ -317,7 +317,7 @@ export const sendApplicationNotificationToOrganizer = async (eventData: any, hum
             ` : ''}
             
             <div class="cta-buttons">
-                <a href="http://localhost:5173/login?redirect=/dashboard" class="cta-button btn-review">
+                <a href="https://standup-comedy-app.netlify.app/applications" class="cta-button btn-review">
                     📋 Voir les Candidatures
                 </a>
             </div>
@@ -710,7 +710,7 @@ export const sendApplicationStatusToComedian = async (
         <span>📍 ${event.location.address}, ${event.location.city}</span>
       </div>
       <div style="text-align: center; margin-top: 32px;">
-        <a href="http://localhost:5173/applications" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #667eea, #764ba2); color: white; border-radius: 24px; text-decoration: none; font-weight: bold; font-size: 1.1em;">Voir mes candidatures</a>
+        <a href="https://standup-comedy-app.netlify.app/applications" style="display: inline-block; padding: 14px 32px; background: linear-gradient(90deg, #667eea, #764ba2); color: white; border-radius: 24px; text-decoration: none; font-weight: bold; font-size: 1.1em;">Voir mes candidatures</a>
       </div>
       <p style="text-align: center; color: #888; margin-top: 32px; font-size: 0.95em;">L'équipe Standup Comedy Connect</p>
     </div>
