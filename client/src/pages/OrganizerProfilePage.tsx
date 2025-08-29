@@ -50,7 +50,7 @@ function OrganizerProfilePage() {
     maxWidth: '1200px',
     margin: '0 auto',
     display: 'grid',
-    gridTemplateColumns: '2fr 1fr',
+    gridTemplateColumns: window.innerWidth < 768 ? '1fr' : '2fr 1fr',
     gap: '20px',
     alignItems: 'flex-start',
   };
@@ -197,7 +197,7 @@ function OrganizerProfilePage() {
           </div>
 
           {/* Profil Organisateur (si applicable) */}
-          <div style={{ ...cardStyle, gridColumn: 'span 2' }}>
+          <div style={{ ...cardStyle, gridColumn: window.innerWidth < 768 ? 'span 1' : 'span 2' }}>
             <h2 style={cardTitleStyle}>Profil Organisateur</h2>
             <div style={infoRowStyle}>
               <span style={infoLabelStyle}>Nom de l'entreprise:</span>
