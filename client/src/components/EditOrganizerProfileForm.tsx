@@ -1,6 +1,6 @@
 import React, { useState, type CSSProperties, useEffect } from 'react';
 import type { IUserData } from '../types/user';
-import axios from 'axios';
+import api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 
 interface EditOrganizerProfileFormProps {
@@ -124,7 +124,7 @@ function EditOrganizerProfileForm({ isOpen, onClose, currentUser, onSaveSuccess 
       };
 
       const userId = currentUser.id || currentUser._id;
-      const res = await axios.put(`/api/profile/${userId}`, updatedData, config); // Use PUT for update
+      const res = await api.put(`/profile/${userId}`, updatedData, config); // Use PUT for update via baseURL
       console.log('Profil mis à jour:', res.data);
       alert('Profil mis à jour avec succès !');
       onSaveSuccess(); // Trigger a refetch or state update in parent
