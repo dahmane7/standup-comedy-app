@@ -1,4 +1,4 @@
-import { type CSSProperties, useState, useMemo } from 'react';
+import { type CSSProperties, useState, useMemo, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Modal from '../components/Modal';
 import CreateEventForm from '../components/CreateEventForm';
@@ -16,6 +16,7 @@ import { markAbsence, cancelAbsence, getEventAbsences } from '../services/api';
 
 function MyEventsPage() {
   const { token, user, refreshUser, isLoading: authIsLoading } = useAuth();
+  const [isMobile, setIsMobile] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<IEvent | null>(null);
   const [showCreateEventForm, setShowCreateEventForm] = useState(false);
@@ -646,8 +647,14 @@ function MyEventsPage() {
         </div>
       ) : (
         <>
-          <div style={pageHeaderStyle}>
-            <div>
+          <div style={{
+              ...pageHeaderStyle,
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              alignItems: isMobile ? 'center' : 'center',
+              gap: isMobile ? 12 : 0
+            }}>
+            <div style={{ textAlign: isMobile ? 'center' : 'left' }}>
               <h1 style={titleStyle}>Les événements</h1>
               <p style={{ fontSize: '1.1em', color: '#aaa' }}>
                 {user?.role === 'ORGANIZER' 
@@ -658,9 +665,17 @@ function MyEventsPage() {
               </p>
             </div>
             {user?.role === 'ORGANIZER' && (
-              <button onClick={() => setShowCreateEventForm(true)} style={buttonStyle}>
-                Créer un événement
-              </button>
+              isMobile ? (
+                <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                  <button onClick={() => setShowCreateEventForm(true)} style={buttonStyle}>
+                    Créer un événement
+                  </button>
+                </div>
+              ) : (
+                <button onClick={() => setShowCreateEventForm(true)} style={buttonStyle}>
+                  Créer un événement
+                </button>
+              )
             )}
           </div>
 

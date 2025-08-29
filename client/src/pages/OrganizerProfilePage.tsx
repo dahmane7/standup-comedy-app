@@ -58,12 +58,12 @@ function OrganizerProfilePage() {
   const cardStyle: CSSProperties = {
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderRadius: '8px',
-    padding: '25px',
+    padding: '18px',
     boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
   };
 
   const cardTitleStyle: CSSProperties = {
-    fontSize: '1.5em',
+    fontSize: '1.3em',
     color: '#ff4b2b',
     marginBottom: '15px',
     display: 'flex',
@@ -73,16 +73,22 @@ function OrganizerProfilePage() {
   const infoRowStyle: CSSProperties = {
     display: 'flex',
     justifyContent: 'space-between',
-    marginBottom: '10px',
+    gap: 10,
+    marginBottom: '8px',
+    flexWrap: 'wrap',
   };
 
   const infoLabelStyle: CSSProperties = {
     fontWeight: 'bold',
     color: '#ccc',
+    fontSize: '0.95em',
   };
 
   const infoValueStyle: CSSProperties = {
     color: '#fff',
+    fontSize: '0.95em',
+    textAlign: 'right',
+    maxWidth: '60%',
   };
 
   const profileCardStyle: CSSProperties = {
