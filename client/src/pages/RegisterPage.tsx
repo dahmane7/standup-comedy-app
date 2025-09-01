@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
 
@@ -19,10 +19,28 @@ function RegisterPage() {
     confirmPassword: '',
   });
   const [passwordError, setPasswordError] = useState('');
+  const [passwordValidation, setPasswordValidation] = useState({
+    length: false,
+    uppercase: false,
+    number: false,
+    isValid: false
+  });
+
+  // Initialiser la validation au chargement
+  useEffect(() => {
+    validatePassword(formData.password);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordError('');
+    
+    // Vérifier la validation du mot de passe
+    if (!passwordValidation.isValid) {
+      setPasswordError('Le mot de passe ne respecte pas les critères de sécurité !');
+      return;
+    }
+    
     if (formData.password !== formData.confirmPassword) {
       setPasswordError('Les mots de passe ne correspondent pas !');
       return;
@@ -35,8 +53,28 @@ function RegisterPage() {
     }
   };
 
+  const validatePassword = (password: string) => {
+    const length = password.length >= 8;
+    const uppercase = /[A-Z]/.test(password);
+    const number = /[0-9]/.test(password);
+    const isValid = length && uppercase && number;
+    
+    setPasswordValidation({
+      length,
+      uppercase,
+      number,
+      isValid
+    });
+  };
+
   const handleChangeRegister = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    
+    // Validation en temps réel du mot de passe
+    if (name === 'password') {
+      validatePassword(value);
+    }
+    
     if (name === 'bio' || name === 'experience') {
       setFormData(prev => ({
         ...prev,
@@ -133,6 +171,46 @@ function RegisterPage() {
             style={inputStyle}
             required
           />
+          
+          {/* Critères de validation du mot de passe */}
+          <div style={{ 
+            marginBottom: '15px', 
+            padding: '10px', 
+            backgroundColor: 'rgba(0, 0, 0, 0.3)', 
+            borderRadius: '5px',
+            fontSize: '0.85em'
+          }}>
+            <div style={{ marginBottom: '8px', color: '#ff4b2b', fontWeight: 'bold' }}>
+              Critères de sécurité :
+            </div>
+            <div style={{ 
+              color: passwordValidation.length ? '#28a745' : '#dc3545',
+              marginBottom: '3px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px'
+            }}>
+              {passwordValidation.length ? '✓' : '✗'} Au moins 8 caractères
+            </div>
+            <div style={{ 
+              color: passwordValidation.uppercase ? '#28a745' : '#dc3545',
+              marginBottom: '3px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px'
+            }}>
+              {passwordValidation.uppercase ? '✓' : '✗'} Au moins 1 majuscule
+            </div>
+            <div style={{ 
+              color: passwordValidation.number ? '#28a745' : '#dc3545',
+              marginBottom: '3px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px'
+            }}>
+              {passwordValidation.number ? '✓' : '✗'} Au moins 1 chiffre
+            </div>
+          </div>
           <input
             type="password"
             name="confirmPassword"

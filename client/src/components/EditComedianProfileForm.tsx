@@ -103,83 +103,108 @@ function EditComedianProfileForm({ isOpen, onClose, currentUser, onSaveSuccess }
     backgroundImage: 'none',
   };
 
+  const labelStyle: CSSProperties = {
+    display: 'block',
+    marginBottom: '5px',
+    fontWeight: 'bold',
+    color: '#ff4b2b',
+    fontSize: '0.9em',
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <h2 style={{ color: '#ff416c', marginBottom: '20px' }}>Modifier le Profil Humoriste</h2>
       <form onSubmit={handleSubmit}>
+        <label style={labelStyle}>Prénom *</label>
         <input
           type="text"
           name="firstName"
           value={formData.firstName}
           onChange={handleChange}
-          placeholder="Prénom"
+          placeholder="Entrez votre prénom"
           style={inputStyle}
           required
         />
+        
+        <label style={labelStyle}>Nom *</label>
         <input
           type="text"
           name="lastName"
           value={formData.lastName}
           onChange={handleChange}
-          placeholder="Nom"
+          placeholder="Entrez votre nom"
           style={inputStyle}
           required
         />
+        
+        <label style={labelStyle}>Email *</label>
         <input
           type="email"
           name="email"
           value={formData.email}
           onChange={handleChange}
-          placeholder="Email"
+          placeholder="Entrez votre email"
           style={inputStyle}
           required
         />
+        
+        <label style={labelStyle}>Ville</label>
         <input
           type="text"
           name="city"
           value={formData.city || ''}
           onChange={handleChange}
-          placeholder="Ville"
+          placeholder="Entrez votre ville"
           style={inputStyle}
         />
+        
+        <label style={labelStyle}>Téléphone</label>
         <input
           type="text"
           name="phone"
           value={formData.phone || ''}
           onChange={handleChange}
-          placeholder="Téléphone"
+          placeholder="Entrez votre numéro de téléphone"
           style={inputStyle}
         />
+        
+        <label style={labelStyle}>Adresse</label>
         <input
           type="text"
           name="address"
           value={formData.address || ''}
           onChange={handleChange}
-          placeholder="Adresse"
+          placeholder="Entrez votre adresse complète"
           style={inputStyle}
         />
+        
+        <label style={labelStyle}>Bio</label>
         <textarea
           name="profile.bio"
           value={formData.profile?.bio || ''}
           onChange={handleChange}
-          placeholder="Bio"
+          placeholder="Décrivez votre style d'humour et votre parcours..."
           rows={5}
           style={inputStyle}
         ></textarea>
+        
+        <label style={labelStyle}>Années d'expérience</label>
         <input
           type="number"
           name="profile.experience"
           value={formData.profile?.experience || ''}
           onChange={handleChange}
-          placeholder="Années d'expérience"
+          placeholder="Nombre d'années d'expérience"
           style={inputStyle}
         />
+        
+        <label style={labelStyle}>Spécialité</label>
         <input
           type="text"
           name="profile.speciality"
           value={formData.profile?.speciality || ''}
           onChange={handleChange}
-          placeholder="Spécialité"
+          placeholder="Ex: Stand-up, One-man-show, Improvisation..."
           style={inputStyle}
         />
         {error && <p style={{ color: '#dc3545', marginBottom: '15px' }}>{error}</p>}

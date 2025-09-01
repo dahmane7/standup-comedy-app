@@ -99,7 +99,7 @@ export const getEvents = async (req: Request, res: Response): Promise<void> => {
 
 export const getEventById = async (req: Request, res: Response): Promise<void> => {
   try {
-    const event = await EventModel.findById(req.params.id)
+    const event = await EventModel.findById(req.params.eventId)
       .populate('organizer', 'firstName lastName email')
       .populate({
         path: 'applications',
@@ -123,7 +123,7 @@ export const getEventById = async (req: Request, res: Response): Promise<void> =
 
 export const updateEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const eventId = req.params.id;
+    const eventId = req.params.eventId;
     const organizerId = req.user?.id;
 
     const event = await EventModel.findOne({ _id: eventId, organizer: organizerId });
@@ -150,7 +150,7 @@ export const updateEvent = async (req: AuthRequest, res: Response): Promise<void
 
 export const deleteEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const eventId = req.params.id;
+    const eventId = req.params.eventId;
     const organizerId = req.user?.id;
 
     const event = await EventModel.findOne({ _id: eventId, organizer: organizerId });

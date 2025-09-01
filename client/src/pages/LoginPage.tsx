@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
@@ -15,9 +15,32 @@ function LoginPage() {
     email: '',
     password: '',
   });
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordValidation, setPasswordValidation] = useState({
+    length: false,
+    isValid: false
+  });
+
+  const validatePassword = (password: string) => {
+    const length = password.length >= 8;
+    const isValid = length;
+    
+    setPasswordValidation({
+      length,
+      isValid
+    });
+  };
 
   const handleSubmitLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPasswordError('');
+    
+    // Vérifier la validation du mot de passe
+    if (!passwordValidation.isValid) {
+      setPasswordError('Vous ne respectez pas les 8 caractères minimum !');
+      return;
+    }
+    
     try {
       await loginMutation.mutateAsync(loginData);
       navigate(redirect); // Redirige vers la page souhaitée après connexion
@@ -28,6 +51,12 @@ function LoginPage() {
 
   const handleChangeLogin = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    
+    // Validation en temps réel du mot de passe
+    if (name === 'password') {
+      validatePassword(value);
+    }
+    
     setLoginData(prev => ({
       ...prev,
       [name]: value
@@ -123,6 +152,43 @@ function LoginPage() {
             style={inputStyle}
             required
           />
+          
+          {/* Message d'erreur du mot de passe */}
+          {passwordError && (
+            <div style={{ 
+              color: '#dc3545', 
+              marginBottom: '10px', 
+              fontSize: '0.9em',
+              textAlign: 'left',
+              padding: '8px',
+              backgroundColor: 'rgba(220, 53, 69, 0.1)',
+              borderRadius: '5px',
+              border: '1px solid rgba(220, 53, 69, 0.3)'
+            }}>
+              {passwordError}
+            </div>
+          )}
+          
+          {/* Indicateur de validation du mot de passe */}
+          {loginData.password && (
+            <div style={{ 
+              marginBottom: '15px', 
+              padding: '8px', 
+              backgroundColor: 'rgba(0, 0, 0, 0.3)', 
+              borderRadius: '5px',
+              fontSize: '0.8em',
+              textAlign: 'left'
+            }}>
+              <div style={{ 
+                color: passwordValidation.length ? '#28a745' : '#dc3545',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}>
+                {passwordValidation.length ? '✓' : '✗'} Au moins 8 caractères
+              </div>
+            </div>
+          )}
           <button type="submit" style={buttonStyle} disabled={loginMutation.isPending}>
             {loginMutation.isPending ? 'Connexion en cours...' : <>Se connecter <span style={{ marginLeft: '10px' }}>🚀</span></>}
           </button>
