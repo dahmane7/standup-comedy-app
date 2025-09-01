@@ -1,7 +1,7 @@
 import React, { type CSSProperties, useState, useEffect } from 'react';
-import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
 import type { IEvent } from '../types/event';
+import api from '../services/api';
 
 interface EditEventFormProps {
   onClose: () => void;
@@ -110,7 +110,7 @@ function EditEventForm({ onClose, onEventUpdated, eventToEdit }: EditEventFormPr
         },
       };
 
-      await axios.put(`/api/events/${eventToEdit._id}`, eventData, config);
+      await api.put(`/events/${eventToEdit._id}`, eventData, config);
       alert('Événement mis à jour avec succès !');
       onEventUpdated();
     } catch (error: any) {

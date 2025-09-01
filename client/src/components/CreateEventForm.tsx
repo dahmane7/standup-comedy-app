@@ -1,8 +1,8 @@
 import React, { type CSSProperties, useState } from 'react';
-import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
 // import { useIsMobile } from '../hooks/use-mobile';
 import { X } from 'lucide-react';
+import api from '../services/api';
 
 interface CreateEventFormProps {
   onClose: () => void;
@@ -140,7 +140,7 @@ function CreateEventForm({ onClose, onEventCreated }: CreateEventFormProps) {
       
       console.log('📤 Données envoyées au serveur:', eventData);
 
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/events`, eventData, {
+      const response = await api.post(`/events`, eventData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
