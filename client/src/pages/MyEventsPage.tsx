@@ -960,7 +960,7 @@ function MyEventsPage() {
                 )}
               </div>
             )}
-            {user?.role === 'ORGANIZER' && (
+            {user?.role === 'ORGANIZER' && upcomingEvents.includes(event) && (
               <div style={actionButtonContainerStyle}>
                 <button 
                   onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleEditClick(event); }}
