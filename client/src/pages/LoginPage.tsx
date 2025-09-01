@@ -21,6 +21,11 @@ function LoginPage() {
     isValid: false
   });
 
+  // Initialiser la validation au chargement
+  useEffect(() => {
+    validatePassword(loginData.password);
+  }, []);
+
   const validatePassword = (password: string) => {
     const length = password.length >= 8;
     const isValid = length;
