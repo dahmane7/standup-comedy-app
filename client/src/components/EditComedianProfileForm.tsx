@@ -1,8 +1,8 @@
 import React, { type CSSProperties, useState, useEffect } from 'react';
-import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
 import type { IUserData } from '../types/user';
 import Modal from './Modal';
+import api from '../services/api';
 
 interface EditComedianProfileFormProps {
   isOpen: boolean;
@@ -64,7 +64,7 @@ function EditComedianProfileForm({ isOpen, onClose, currentUser, onSaveSuccess }
         }
       };
 
-      await axios.put(`/api/profile/${currentUser._id}`, comedianProfileData, config);
+      await api.put(`/profile/${currentUser._id}`, comedianProfileData, config);
       onSaveSuccess();
     } catch (err: any) {
       console.error('Erreur lors de la mise à jour du profil:', err.response?.data || err.message);
