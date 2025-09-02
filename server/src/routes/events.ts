@@ -6,7 +6,7 @@ import { validate } from '../middleware/validation';
 import { createEventSchema, updateEventSchema } from '../validation/schemas';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import mongoose from 'mongoose';
-import { getEventStats, createEvent } from '../controllers/event';
+import { getEventStats, createEvent, updateEvent } from '../controllers/event';
 import { AbsenceModel } from '../models/Absence';
 
 const router = express.Router();
@@ -75,23 +75,8 @@ router.get('/:eventId', asyncHandler(async (req: Request, res: Response) => {
   res.json(event);
 }));
 
-// Route pour mettre à jour un événement (protégée)
-router.put('/:eventId', authMiddleware, validate(updateEventSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { eventId } = req.params;
-  const event = await EventModel.findById(eventId);
-  
-  if (!event) {
-    return res.status(404).json({ message: 'Événement non trouvé' });
-  }
-
-  // Vérifier si l'utilisateur est l'organisateur de l'événement
-  if (event.organizer.toString() !== req.user?.id) {
-    return res.status(403).json({ message: 'Non autorisé à modifier cet événement' });
-  }
-
-  const updatedEvent = await EventModel.findByIdAndUpdate(eventId, req.body, { new: true });
-  res.json(updatedEvent);
-}));
+// Route pour mettre à jour un événement (protégée) - utilise le contrôleur avec notification emails
+router.put('/:eventId', authMiddleware, validate(updateEventSchema), asyncHandler(updateEvent));
 
 // Route pour supprimer un événement (protégée)
 router.delete('/:eventId', authMiddleware, asyncHandler(async (req: AuthRequest, res: Response) => {
