@@ -39,9 +39,9 @@ router.get('/', authMiddleware, asyncHandler(async (req: AuthRequest, res: Respo
     // If no specific organizerId, and user is an ORGANIZER, show their own events
     query.organizer = userId;
   } else if (userRole === 'COMEDIAN') {
-    // For comedians, show all published events (current and past) 
-    // This allows them to see events they applied to, even if past
-    query.status = { $in: ['published', 'completed', 'cancelled'] };
+    // For comedians, show all published events (current and past)
+    // Some historical events may have uppercase statuses; include both cases
+    query.status = { $in: ['published', 'PUBLISHED', 'completed', 'COMPLETED', 'cancelled', 'CANCELLED'] };
   } else if (userRole === 'SUPER_ADMIN') {
     // Super Admin can see ALL events (no filter by status or organizer)
     // This will return all events from all organizers with all statuses
