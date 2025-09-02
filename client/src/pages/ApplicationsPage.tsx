@@ -23,6 +23,7 @@ export interface IEventPopulated {
   organizer: IUser; // Change to IUser
   status: 'DRAFT' | 'PUBLISHED' | 'CANCELLED' | 'COMPLETED';
   requirements: { minExperience: number; maxPerformers: number; duration: number; };
+  updatedAt?: string;
 }
 
 export interface IApplication {
@@ -493,6 +494,35 @@ function ApplicationsPage() {
                                 )}
                                 {app.message && <p style={cardDetailStyle}>Message: {app.message}</p>}
                                 <span style={statusBadgeStyle(app.status)}>Statut: {translateStatus(app.status)}</span>
+                                {user?.role === 'COMEDIAN' && app.event.updatedAt && new Date(app.event.updatedAt).getTime() > new Date(app.createdAt).getTime() && (
+                                  <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                                    <button
+                                      onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); alert('Confirmation enregistrée.'); }}
+                                      style={{ ...actionButtonStyle, backgroundColor: '#28a745' }}
+                                    >
+                                      Je reste inscrit
+                                    </button>
+                                    <button
+                                      onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
+                                        e.stopPropagation();
+                                        if (!token) return;
+                                        if (!confirm('Confirmer la désinscription ?')) return;
+                                        try {
+                                          const config = { headers: { Authorization: `Bearer ${token}` } };
+                                          await api.delete(`/applications/${app._id}`, config);
+                                          alert('Candidature retirée.');
+                                          fetchApplications();
+                                          refreshUser();
+                                        } catch (err: any) {
+                                          alert('Échec de la désinscription.');
+                                        }
+                                      }}
+                                      style={{ ...actionButtonStyle, backgroundColor: '#dc3545' }}
+                                    >
+                                      Me désinscrire
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           ))}
