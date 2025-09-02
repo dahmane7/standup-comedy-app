@@ -52,6 +52,9 @@ function ApplicationsPage() {
   const [statusMessage, setStatusMessage] = useState('');
   const messageInputRef = useRef<HTMLInputElement | null>(null);
   const [comedianFilter, setComedianFilter] = useState<string>('all');
+  const [selectedEventId, setSelectedEventId] = useState<string>('all');
+  const [organizerEvents, setOrganizerEvents] = useState<Array<{ id: string; title: string }>>([]);
+  const [sortKey, setSortKey] = useState<'dateAsc' | 'dateDesc' | 'statusAsc' | 'statusDesc'>('dateDesc');
 
   const getStatusFromUrlOrTab = () => {
     const queryParams = new URLSearchParams(location.search);
@@ -92,7 +95,8 @@ function ApplicationsPage() {
         },
       };
 
-      const res = await api.get<IApplication[]>('/applications', config);
+      const query = selectedEventId !== 'all' ? `?eventId=${encodeURIComponent(selectedEventId)}` : '';
+      const res = await api.get<IApplication[]>(`/applications${query}`, config);
       const list = Array.isArray(res.data)
         ? res.data
         : (Array.isArray((res.data as any)?.applications) ? (res.data as any).applications : []);
@@ -107,7 +111,24 @@ function ApplicationsPage() {
 
   useEffect(() => {
     fetchApplications();
-  }, [token, selectedTab]);
+  }, [token, selectedTab, selectedEventId]);
+
+  // Charger les événements de l'organisateur pour le sélecteur
+  useEffect(() => {
+    const loadOrganizerEvents = async () => {
+      if (!token || user?.role !== 'ORGANIZER') return;
+      try {
+        const config = { headers: { Authorization: `Bearer ${token}` } };
+        const res = await api.get<any[]>('/events', config);
+        const list = Array.isArray(res.data) ? res.data : [];
+        const options = list.map((ev: any) => ({ id: ev._id, title: ev.title }));
+        setOrganizerEvents(options);
+      } catch (err) {
+        console.error('Erreur chargement événements pour filtre:', err);
+      }
+    };
+    loadOrganizerEvents();
+  }, [token, user?.role]);
 
   const openStatusModal = (appId: string, status: 'ACCEPTED' | 'REJECTED') => {
     setStatusAppId(appId);
@@ -169,7 +190,27 @@ function ApplicationsPage() {
     if (comedianFilter !== 'all') {
       filtered = filtered.filter(app => app.comedian && app.comedian._id === comedianFilter);
     }
-    return filtered;
+    // Tri
+    const sortByStatusOrder = (a: IApplication['status'], b: IApplication['status']) => {
+      const order = ['PENDING', 'ACCEPTED', 'REJECTED'];
+      return order.indexOf(a) - order.indexOf(b);
+    };
+    const sorted = [...filtered].sort((a, b) => {
+      if (sortKey === 'dateAsc') {
+        return new Date(a.event.date).getTime() - new Date(b.event.date).getTime();
+      }
+      if (sortKey === 'dateDesc') {
+        return new Date(b.event.date).getTime() - new Date(a.event.date).getTime();
+      }
+      if (sortKey === 'statusAsc') {
+        return sortByStatusOrder(a.status, b.status);
+      }
+      if (sortKey === 'statusDesc') {
+        return sortByStatusOrder(b.status, a.status);
+      }
+      return 0;
+    });
+    return sorted;
   };
 
   const allApplicationsCount = applications.length;
@@ -379,6 +420,32 @@ function ApplicationsPage() {
               <option key={comedian.id} value={comedian.id}>{comedian.name}</option>
             ))}
           </select>
+
+          {/* Filtre par événement (organisateur uniquement) */}
+          {user?.role === 'ORGANIZER' && (
+            <select
+              value={selectedEventId}
+              onChange={e => setSelectedEventId(e.target.value)}
+              style={{ padding: '8px', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', minWidth: 220 }}
+            >
+              <option value="all">Tous les événements</option>
+              {organizerEvents.map(ev => (
+                <option key={ev.id} value={ev.id}>{ev.title}</option>
+              ))}
+            </select>
+          )}
+
+          {/* Tri */}
+          <select
+            value={sortKey}
+            onChange={e => setSortKey(e.target.value as any)}
+            style={{ padding: '8px', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', minWidth: 220 }}
+          >
+            <option value="dateDesc">Trier: Date (plus récent)</option>
+            <option value="dateAsc">Trier: Date (plus ancien)</option>
+            <option value="statusAsc">Trier: Statut (PENDING→ACCEPTED→REJECTED)</option>
+            <option value="statusDesc">Trier: Statut (REJECTED→ACCEPTED→PENDING)</option>
+          </select>
         </div>
 
         {loading && <p style={{ textAlign: 'center', color: '#ccc' }}>Chargement des candidatures...</p>}
@@ -390,54 +457,104 @@ function ApplicationsPage() {
         )}
 
         {!loading && !error && getFilteredApplications().length > 0 && (
-          <div style={applicationsGridStyle}>
-            {getFilteredApplications()
-              .filter(app => app.event)
-              .map((app) => (
-              <div 
-                key={app._id} 
-                style={applicationCardStyle}
-                onClick={() => {
-                  setSelectedApplication(app);
-                  setIsModalOpen(true);
-                }}
-              >
-                <div>
-                  <h3 style={cardTitleStyle}>{app.event.title}</h3>
-                  {user?.role === 'ORGANIZER' && (
+          <>
+            {user?.role === 'COMEDIAN' ? (
+              <>
+                {/* Séparation à venir / archivées côté humoriste */}
+                {(() => {
+                  const today = new Date();
+                  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                  const list = getFilteredApplications().filter(app => app.event);
+                  const upcoming = list.filter(app => new Date(app.event.date) >= todayMidnight);
+                  const archived = list.filter(app => new Date(app.event.date) < todayMidnight);
+                  const Section = ({ title, items }: { title: string; items: IApplication[] }) => (
+                    <div style={{ marginBottom: 30 }}>
+                      <h2 style={{ color: '#ff416c', margin: '10px 0' }}>{title}</h2>
+                      {items.length === 0 ? (
+                        <p style={{ color: '#ccc' }}>Aucune candidature.</p>
+                      ) : (
+                        <div style={applicationsGridStyle}>
+                          {items.map(app => (
+                            <div 
+                              key={app._id} 
+                              style={applicationCardStyle}
+                              onClick={() => { setSelectedApplication(app); setIsModalOpen(true); }}
+                            >
+                              <div>
+                                <h3 style={cardTitleStyle}>{app.event.title}</h3>
+                                <p style={cardDetailStyle}>Organisateur: {app.event.organizer.firstName} {app.event.organizer.lastName}</p>
+                                <p style={cardDetailStyle}>Date de l'événement: {new Date(app.event.date).toLocaleDateString()}</p>
+                                {app.performanceDetails && (
+                                  <>
+                                    <p style={cardDetailStyle}>Durée proposée: {app.performanceDetails.duration} min</p>
+                                    <p style={cardDetailStyle}>Description: {app.performanceDetails.description}</p>
+                                    {app.performanceDetails.videoLink && <p style={cardDetailStyle}>Lien vidéo: <a href={app.performanceDetails.videoLink} target="_blank" rel="noopener noreferrer" style={{ color: '#ff4b2b' }}>Voir la vidéo</a></p>}
+                                  </>
+                                )}
+                                {app.message && <p style={cardDetailStyle}>Message: {app.message}</p>}
+                                <span style={statusBadgeStyle(app.status)}>Statut: {translateStatus(app.status)}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                  return (
                     <>
-                      <p style={cardDetailStyle}>Humoriste: {app.comedian.firstName} {app.comedian.lastName}</p>
-                      <p style={cardDetailStyle}>Email: {app.comedian.email}</p>
-                      {app.comedian.profile?.bio && <p style={cardDetailStyle}>Bio: {app.comedian.profile.bio}</p>}
-                      {app.comedian.profile?.experience !== undefined && <p style={cardDetailStyle}>Expérience: {app.comedian.profile.experience} ans</p>}
-                      {app.comedian.profile?.speciality && <p style={cardDetailStyle}>Spécialité: {app.comedian.profile.speciality}</p>}
+                      <Section title="Candidatures à venir" items={upcoming} />
+                      <Section title="Candidatures archivées" items={archived} />
                     </>
-                  )}
-                  {user?.role === 'COMEDIAN' && (
-                    <>
-                      <p style={cardDetailStyle}>Organisateur: {app.event.organizer.firstName} {app.event.organizer.lastName}</p>
-                    </>
-                  )}
-                  <p style={cardDetailStyle}>Date de l'événement: {new Date(app.event.date).toLocaleDateString()}</p>
-                  {app.performanceDetails && (
-                    <>
-                      <p style={cardDetailStyle}>Durée proposée: {app.performanceDetails.duration} min</p>
-                      <p style={cardDetailStyle}>Description: {app.performanceDetails.description}</p>
-                      {app.performanceDetails.videoLink && <p style={cardDetailStyle}>Lien vidéo: <a href={app.performanceDetails.videoLink} target="_blank" rel="noopener noreferrer" style={{ color: '#ff4b2b' }}>Voir la vidéo</a></p>}
-                    </>
-                  )}
-                  {app.message && <p style={cardDetailStyle}>Message: {app.message}</p>}
-                  <span style={statusBadgeStyle(app.status)}>Statut: {translateStatus(app.status)}</span>
-                </div>
-                {user?.role === 'ORGANIZER' && app.status === 'PENDING' && (
-                  <div style={{ marginTop: '15px' }}>
-                    <button style={acceptButtonStyle} onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); openStatusModal(app._id, 'ACCEPTED'); }}>Accepter</button>
-                    <button style={rejectButtonStyle} onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); openStatusModal(app._id, 'REJECTED'); }}>Refuser</button>
+                  );
+                })()}
+              </>
+            ) : (
+              // Affichage organisateur (inchangé)
+              <div style={applicationsGridStyle}>
+                {getFilteredApplications()
+                  .filter(app => app.event)
+                  .map((app) => (
+                  <div 
+                    key={app._id} 
+                    style={applicationCardStyle}
+                    onClick={() => {
+                      setSelectedApplication(app);
+                      setIsModalOpen(true);
+                    }}
+                  >
+                    <div>
+                      <h3 style={cardTitleStyle}>{app.event.title}</h3>
+                      {user?.role === 'ORGANIZER' && (
+                        <>
+                          <p style={cardDetailStyle}>Humoriste: {app.comedian.firstName} {app.comedian.lastName}</p>
+                          <p style={cardDetailStyle}>Email: {app.comedian.email}</p>
+                          {app.comedian.profile?.bio && <p style={cardDetailStyle}>Bio: {app.comedian.profile.bio}</p>}
+                          {app.comedian.profile?.experience !== undefined && <p style={cardDetailStyle}>Expérience: {app.comedian.profile.experience} ans</p>}
+                          {app.comedian.profile?.speciality && <p style={cardDetailStyle}>Spécialité: {app.comedian.profile.speciality}</p>}
+                        </>
+                      )}
+                      <p style={cardDetailStyle}>Date de l'événement: {new Date(app.event.date).toLocaleDateString()}</p>
+                      {app.performanceDetails && (
+                        <>
+                          <p style={cardDetailStyle}>Durée proposée: {app.performanceDetails.duration} min</p>
+                          <p style={cardDetailStyle}>Description: {app.performanceDetails.description}</p>
+                          {app.performanceDetails.videoLink && <p style={cardDetailStyle}>Lien vidéo: <a href={app.performanceDetails.videoLink} target="_blank" rel="noopener noreferrer" style={{ color: '#ff4b2b' }}>Voir la vidéo</a></p>}
+                        </>
+                      )}
+                      {app.message && <p style={cardDetailStyle}>Message: {app.message}</p>}
+                      <span style={statusBadgeStyle(app.status)}>Statut: {translateStatus(app.status)}</span>
+                    </div>
+                    {user?.role === 'ORGANIZER' && app.status === 'PENDING' && (
+                      <div style={{ marginTop: '15px' }}>
+                        <button style={acceptButtonStyle} onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); openStatusModal(app._id, 'ACCEPTED'); }}>Accepter</button>
+                        <button style={rejectButtonStyle} onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); openStatusModal(app._id, 'REJECTED'); }}>Refuser</button>
+                      </div>
+                    )}
                   </div>
-                )}
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
       {selectedApplication && (

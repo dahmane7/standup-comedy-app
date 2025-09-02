@@ -41,10 +41,16 @@ router.get('/', authMiddleware, asyncHandler(async (req: AuthRequest, res: Respo
     return res.status(401).json({ message: 'Utilisateur non authentifié.' });
   }
 
-  const { status } = req.query;
+  const { status, eventId } = req.query as { status?: string | string[]; eventId?: string };
 
-  // On récupère toutes les candidatures et on filtre côté JS
-  const applications = await ApplicationModel.find().select('+performanceDetails +message +organizerMessage')
+  // Construire un filtre DB minimal si eventId est fourni
+  const dbFilter: any = {};
+  if (eventId && Types.ObjectId.isValid(eventId)) {
+    dbFilter.event = new Types.ObjectId(eventId);
+  }
+
+  // Récupérer les candidatures (avec filtre éventuel par eventId)
+  const applications = await ApplicationModel.find(dbFilter).select('+performanceDetails +message +organizerMessage')
     .populate({
       path: 'event',
       select: 'title date startTime organizer location',
