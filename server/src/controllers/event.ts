@@ -140,16 +140,20 @@ export const updateEvent = async (req: AuthRequest, res: Response): Promise<void
 
     // Notifier les humoristes ayant postulé si l'événement est futur
     if (updatedEvent && new Date(updatedEvent.date) >= new Date()) {
+      console.log('📧 [DEBUG] Mise à jour événement futur, préparation envoi emails de mise à jour...');
       const applications = await ApplicationModel.find({ event: updatedEvent._id, status: { $in: ['PENDING', 'ACCEPTED'] } })
         .populate('comedian', 'email firstName lastName');
 
       const organizer = await UserModel.findById(organizerId).select('firstName lastName email');
+      console.log(`📧 [DEBUG] Candidatures ciblées: ${applications.length}`);
       if (organizer && applications.length > 0) {
         sendEventUpdatedNotificationToApplicants(applications as any, updatedEvent, {
           firstName: organizer.firstName,
           lastName: organizer.lastName,
           email: organizer.email,
         }).catch(err => console.error('❌ Erreur envoi emails maj événement:', err));
+      } else {
+        console.log('ℹ️ [DEBUG] Aucun destinataire email trouvé ou organisateur introuvable.');
       }
     }
 
