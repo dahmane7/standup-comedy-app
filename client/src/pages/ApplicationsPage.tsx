@@ -483,6 +483,11 @@ function ApplicationsPage() {
                             >
                               <div>
                                 <h3 style={cardTitleStyle}>{app.event.title}</h3>
+                                {app.event.updatedAt && new Date(app.event.updatedAt).getTime() > new Date(app.createdAt).getTime() && (
+                                  <div style={{ display: 'inline-block', marginBottom: 8, padding: '4px 8px', borderRadius: 6, background: '#fff3cd', color: '#664d03', fontSize: 12, fontWeight: 600 }}>
+                                    Modification apportée par l'organisateur à cet événement
+                                  </div>
+                                )}
                                 <p style={cardDetailStyle}>Organisateur: {app.event.organizer.firstName} {app.event.organizer.lastName}</p>
                                 <p style={cardDetailStyle}>Date de l'événement: {new Date(app.event.date).toLocaleDateString()}</p>
                                 {app.performanceDetails && (
@@ -494,7 +499,7 @@ function ApplicationsPage() {
                                 )}
                                 {app.message && <p style={cardDetailStyle}>Message: {app.message}</p>}
                                 <span style={statusBadgeStyle(app.status)}>Statut: {translateStatus(app.status)}</span>
-                                {user?.role === 'COMEDIAN' && app.event.updatedAt && new Date(app.event.updatedAt).getTime() > new Date(app.createdAt).getTime() && (
+                                {user?.role === 'COMEDIAN' && app.event.updatedAt && new Date(app.event.updatedAt).getTime() > new Date(app.createdAt).getTime() && (new Date(app.event.date) >= todayMidnight) && (
                                   <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
                                     <button
                                       onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); alert('Confirmation enregistrée.'); }}

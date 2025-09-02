@@ -192,6 +192,17 @@ router.delete('/:applicationId', authMiddleware, asyncHandler(async (req: AuthRe
     return res.status(403).json({ message: 'Non autorisé à supprimer cette candidature' });
   }
 
+  // Si la candidature était ACCEPTED, retirer le comédien des participants de l'événement
+  try {
+    if (application.status === 'ACCEPTED' && application.event && application.comedian) {
+      const eventId = (application.event as any)._id || application.event;
+      const comedianId = (application.comedian as any)._id || application.comedian;
+      await EventModel.findByIdAndUpdate(eventId, { $pull: { participants: comedianId } });
+    }
+  } catch (e) {
+    console.error('Erreur lors du retrait du participant de l\'événement:', e);
+  }
+
   await ApplicationModel.findByIdAndDelete(applicationId);
   res.json({ message: 'Candidature supprimée avec succès' });
 }));
