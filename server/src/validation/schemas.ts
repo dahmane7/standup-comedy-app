@@ -49,7 +49,8 @@ export const createEventSchema = z.object({
   requirements: requirementsSchema
 });
 
-export const updateEventSchema = createEventSchema.partial();
+// Pour la mise à jour, autoriser des objets partiels en profondeur (ex: location seulement avec city)
+export const updateEventSchema = createEventSchema.partial({ deep: true });
 
 // Schéma de validation pour les candidatures
 export const performanceDetailsSchema = z.object({
