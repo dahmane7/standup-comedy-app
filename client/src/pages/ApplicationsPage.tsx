@@ -66,6 +66,17 @@ function ApplicationsPage() {
     setSelectedTab(getStatusFromUrlOrTab());
   }, [location.search]);
 
+  // Affichage message après action email (?update=kept|withdrawn)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const update = params.get('update');
+    if (update === 'kept') {
+      alert("Confirmation prise en compte: l'humoriste reste inscrit.");
+    } else if (update === 'withdrawn') {
+      alert("Désinscription confirmée: la candidature a été retirée.");
+    }
+  }, [location.search]);
+
   const fetchApplications = async () => {
     if (!token) {
       setError("Vous devez être connecté pour voir les candidatures.");

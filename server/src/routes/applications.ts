@@ -9,6 +9,8 @@ import { Types } from 'mongoose';
 import { EventModel } from '../models/Event';
 import { createApplication } from '../controllers/application';
 import { sendApplicationStatusToComedian } from '../services/emailService';
+import jwt from 'jsonwebtoken';
+import { config } from '../config/env';
 
 const router = express.Router();
 
@@ -189,3 +191,25 @@ router.delete('/:applicationId', authMiddleware, asyncHandler(async (req: AuthRe
 }));
 
 export default router; 
+
+// Réponse d'un humoriste après mise à jour d'événement (via lien email)
+router.get('/respond-update', asyncHandler(async (req: Request, res: Response) => {
+  const { token, action } = req.query as { token?: string; action?: 'keep' | 'withdraw' };
+  if (!token || !action) return res.status(400).send('Requête invalide');
+
+  try {
+    const payload = jwt.verify(token, config.jwt.secret as string) as any;
+    const applicationId = payload.applicationId as string;
+    if (!applicationId) return res.status(400).send('Token invalide');
+
+    if (action === 'withdraw') {
+      await ApplicationModel.findByIdAndDelete(applicationId);
+      return res.redirect('https://standup-comedy-app.netlify.app/applications?update=withdrawn');
+    }
+
+    // keep: on ne change rien, simple confirmation
+    return res.redirect('https://standup-comedy-app.netlify.app/applications?update=kept');
+  } catch (_e) {
+    return res.status(400).send('Lien expiré ou invalide');
+  }
+}));

@@ -1,4 +1,5 @@
 import { type CSSProperties, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
@@ -7,12 +8,24 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 
 function ComedianDashboardPage() {
   const { user, token, refreshUser } = useAuth();
+  const location = useLocation();
 
   useEffect(() => {
     if (token) {
       refreshUser();
     }
   }, [token, refreshUser]);
+
+  // Afficher un message simple selon ?update=kept|withdrawn
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const update = params.get('update');
+    if (update === 'kept') {
+      alert("Confirmation prise en compte: vous restez inscrit à l'événement.");
+    } else if (update === 'withdrawn') {
+      alert("Désinscription confirmée: votre candidature a été retirée.");
+    }
+  }, [location.search]);
 
   // Récupère les candidatures de l'humoriste
   const { data: applications } = useQuery({

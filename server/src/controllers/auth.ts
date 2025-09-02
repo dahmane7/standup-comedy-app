@@ -5,7 +5,7 @@ import { config } from '../config/env';
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { email, password, firstName, lastName, role } = req.body;
+    const { email, phone, password, firstName, lastName, role } = req.body;
 
     // Vérifier si l'utilisateur existe déjà
     const existingUser = await UserModel.findOne({ email });
@@ -25,6 +25,7 @@ export const register = async (req: Request, res: Response) => {
     // Créer le nouvel utilisateur
     const user = new UserModel({
       email,
+      phone,
       password,
       firstName,
       lastName,
@@ -53,6 +54,7 @@ export const register = async (req: Request, res: Response) => {
       user: {
         id: user._id,
         email: user.email,
+        phone: user.phone,
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
@@ -133,6 +135,7 @@ export const getProfile = async (req: Request, res: Response) => {
     const userResponse = {
       id: user._id,
       email: user.email,
+      phone: user.phone,
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,

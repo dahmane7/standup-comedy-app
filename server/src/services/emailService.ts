@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import jwt from 'jsonwebtoken';
 import { UserModel } from '../models/User';
 import { config } from '../config/env';
 
@@ -726,3 +727,54 @@ export const sendApplicationStatusToComedian = async (
 
   await transporter.sendMail(mailOptions);
 }; 
+
+// Notifier les humoristes ayant déjà postulé quand un événement est modifié
+export const sendEventUpdatedNotificationToApplicants = async (
+  applications: Array<{ _id: string; comedian: any }>,
+  event: any,
+  organizer: { firstName: string; lastName: string; email: string }
+) => {
+  if (!applications || applications.length === 0) return;
+
+  const subject = `✏️ Mise à jour de l'événement "${event.title}"`;
+  const backendBase = process.env.BACKEND_PUBLIC_URL || 'https://standup-comedy-app.onrender.com';
+
+  const sendAll = applications.map((app: any) => {
+    const comedian = app.comedian;
+    if (!comedian?.email) return Promise.resolve();
+    const token = jwt.sign({ applicationId: app._id, comedianId: comedian._id }, config.jwt.secret as string, { expiresIn: '7d' });
+    const keepUrl = `${backendBase}/api/applications/respond-update?token=${encodeURIComponent(token)}&action=keep`;
+    const withdrawUrl = `${backendBase}/api/applications/respond-update?token=${encodeURIComponent(token)}&action=withdraw`;
+
+    const html = `
+    <div style="font-family: Arial, sans-serif; background: #f8f9fa; padding: 30px;">
+      <div style="max-width: 600px; margin: auto; background: white; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); padding: 24px;">
+        <h2 style="margin-top:0">✏️ L'organisateur a modifié un événement</h2>
+        <p>Bonjour ${comedian.firstName || ''},</p>
+        <p>L'événement auquel vous avez postulé a été mis à jour par <b>${organizer.firstName} ${organizer.lastName}</b>.</p>
+        <div style="margin: 16px 0; padding: 16px; background:#e3f2fd; border-left: 4px solid #2196f3; border-radius: 8px;">
+          <div><b>📛 Titre:</b> ${event.title}</div>
+          <div><b>📅 Date:</b> ${new Date(event.date).toLocaleDateString('fr-FR')}</div>
+          <div><b>📍 Lieu:</b> ${event.location?.address || ''} ${event.location?.city ? `- ${event.location.city}` : ''}</div>
+          ${event.startTime ? `<div><b>⏰ Heure:</b> ${event.startTime}</div>` : ''}
+        </div>
+        <p>Souhaitez-vous rester inscrit à cet événement ?</p>
+        <div style="text-align:center; margin-top: 20px; display:flex; gap:12px; justify-content:center;">
+          <a href="${keepUrl}" style="display:inline-block;padding:12px 24px;background:#28a745;color:#fff;border-radius:24px;text-decoration:none;font-weight:bold">Je reste inscrit</a>
+          <a href="${withdrawUrl}" style="display:inline-block;padding:12px 24px;background:#dc3545;color:#fff;border-radius:24px;text-decoration:none;font-weight:bold">Me désinscrire</a>
+        </div>
+        <p style="color:#888; margin-top:24px;">Cet email est automatique. Merci de ne pas y répondre.</p>
+      </div>
+    </div>`;
+
+    return transporter.sendMail({
+      from: `"${organizer.firstName} ${organizer.lastName}" <${config.email.smtpUser}>`,
+      replyTo: organizer.email,
+      to: comedian.email,
+      subject,
+      html,
+    });
+  });
+
+  await Promise.all(sendAll);
+};

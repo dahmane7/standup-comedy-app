@@ -8,6 +8,7 @@ function RegisterPage() {
 
   const [formData, setFormData] = useState({
     email: '',
+    phone: '',
     password: '',
     firstName: '',
     lastName: '',
@@ -158,6 +159,15 @@ function RegisterPage() {
             name="email"
             placeholder="Email"
             value={formData.email}
+            onChange={handleChangeRegister}
+            style={inputStyle}
+            required
+          />
+          <input
+            type="tel"
+            name="phone"
+            placeholder="Numéro de téléphone"
+            value={formData.phone}
             onChange={handleChangeRegister}
             style={inputStyle}
             required
