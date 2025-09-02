@@ -49,8 +49,20 @@ export const createEventSchema = z.object({
   requirements: requirementsSchema
 });
 
-// Pour la mise à jour, autoriser des objets partiels en profondeur (ex: location seulement avec city)
-export const updateEventSchema = createEventSchema.partial({ deep: true });
+// Schéma de mise à jour: permettre des champs optionnels, y compris sous-objets
+export const updateEventSchema = z.object({
+  title: z.string().min(3, 'Title must be at least 3 characters').optional(),
+  description: z.string().min(10, 'Description must be at least 10 characters').optional(),
+  date: z.preprocess((val) => {
+    if (typeof val === 'string') {
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? val : d;
+    }
+    return val;
+  }, z.date()).optional(),
+  location: updateLocationSchema.optional(),
+  requirements: requirementsSchema.partial().optional(),
+}).partial();
 
 // Schéma de validation pour les candidatures
 export const performanceDetailsSchema = z.object({
