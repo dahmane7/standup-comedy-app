@@ -256,6 +256,14 @@ function MyEventsPage() {
     return { upcomingEvents: upcoming, archivedEvents: archived };
   }, [fetchedEvents, location.search]);
 
+  // Filtrer les événements archivés côté HUMORISTE: afficher uniquement ceux auxquels il a postulé
+  const archivedEventsToShow = useMemo(() => {
+    if (user?.role === 'COMEDIAN') {
+      return archivedEvents.filter(e => appliedEventIds.has(e._id));
+    }
+    return archivedEvents;
+  }, [archivedEvents, appliedEventIds, user?.role]);
+
   // Fonction de filtrage pour les événements à venir
   const getFilteredUpcomingEvents = () => {
     if (completionFilter === 'all') return upcomingEvents;
@@ -887,10 +895,10 @@ function MyEventsPage() {
         <h2 style={sectionTitleStyle}>Événements archivés</h2>
         {eventsLoading && <p style={emptyStateStyle}>Chargement des événements...</p>}
         {eventsError && <p style={{ ...emptyStateStyle, color: '#dc3545' }}>Erreur: {eventsErrorMessage?.message}</p>}
-        {!eventsLoading && !eventsError && archivedEvents.length === 0 && (
+        {!eventsLoading && !eventsError && archivedEventsToShow.length === 0 && (
           <p style={emptyStateStyle}>Aucun événement archivé.</p>
         )}
-        {archivedEvents.map((event) => (
+        {archivedEventsToShow.map((event) => (
           <div key={event._id} style={eventCardStyle} onClick={() => handleCardClick(event)}>
             <h3 style={eventTitleStyle}>{event.title}</h3>
             <p style={eventDetailStyle}>Date: {new Date(event.date).toLocaleDateString()}</p>
