@@ -483,7 +483,7 @@ function ApplicationsPage() {
                             >
                               <div>
                                 <h3 style={cardTitleStyle}>{app.event.title}</h3>
-                                {app.event.updatedAt && new Date(app.event.updatedAt).getTime() > new Date(app.createdAt).getTime() && (
+                                {app.event.updatedAt && (new Date(app.event.date) >= todayMidnight) && new Date(app.event.updatedAt).getTime() > new Date(app.createdAt).getTime() && (
                                   <div style={{ display: 'inline-block', marginBottom: 8, padding: '4px 8px', borderRadius: 6, background: '#fff3cd', color: '#664d03', fontSize: 12, fontWeight: 600 }}>
                                     Modification apportée par l'organisateur à cet événement
                                   </div>
