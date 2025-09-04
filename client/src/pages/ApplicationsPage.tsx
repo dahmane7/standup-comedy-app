@@ -25,6 +25,7 @@ export interface IEventPopulated {
   requirements: { minExperience: number; maxPerformers: number; duration: number; };
   createdAt?: string;
   updatedAt?: string;
+  isModified?: boolean;
 }
 
 export interface IApplication {
@@ -371,13 +372,10 @@ function ApplicationsPage() {
     background: 'linear-gradient(to right, #ff416c, #ff4b2b)',
   };
 
-  // Détermine si l'événement a été modifié APRÈS la candidature
+  // Détermine si l'événement a été modifié par l'organisateur
   const wasEventUpdatedAfterApplication = (app: IApplication): boolean => {
-    if (!app?.event?.updatedAt || !app?.createdAt) return false;
-    const updatedAt = new Date(app.event.updatedAt).getTime();
-    const createdAtApp = new Date(app.createdAt).getTime();
-    // Afficher si l'événement a été modifié après la candidature
-    return updatedAt > createdAtApp;
+    // Utiliser le champ isModified qui est défini uniquement lors de vraies modifications
+    return Boolean(app?.event?.isModified);
   };
 
   return (

@@ -124,6 +124,11 @@ function ComedianDashboardPage() {
     minHeight: '150px',
   };
 
+  const blinkingCardStyle: CSSProperties = {
+    ...cardStyle,
+    animation: 'greenBlink 2s infinite',
+  };
+
   const cardTitleStyle: CSSProperties = {
     fontSize: '1.2em',
     color: '#ffffff',
@@ -154,6 +159,20 @@ function ComedianDashboardPage() {
 
   return (
     <div style={mainContainerStyle}>
+      <style>
+        {`
+          @keyframes greenBlink {
+            0%, 50% { 
+              box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(40, 167, 69, 0.6);
+              border: 2px solid rgba(40, 167, 69, 0.3);
+            }
+            25%, 75% { 
+              box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 30px rgba(40, 167, 69, 0.9);
+              border: 2px solid rgba(40, 167, 69, 0.7);
+            }
+          }
+        `}
+      </style>
       <Navbar />
       <div style={dashboardHeaderStyle}>
         <h1 style={titleStyle}>Tableau de bord de l'Humoriste</h1>
@@ -164,8 +183,8 @@ function ComedianDashboardPage() {
         </div>
 
         <div style={cardsGridStyle}>
-          {/* Carte: Événements à venir (SWAPPED) */}
-          <div style={cardStyle}>
+          {/* Carte: Événements à venir (SWAPPED) - Avec effet clignotant vert */}
+          <div style={blinkingCardStyle}>
             <div>
               <p style={cardTitleStyle}>Événements à venir</p>
               <p style={cardValueStyle}>{upcomingCount}</p>

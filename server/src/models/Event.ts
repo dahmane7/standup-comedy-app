@@ -13,6 +13,7 @@ export interface EventDocument extends Document {
   participants: Types.ObjectId[];
   startTime?: string;
   endTime?: string;
+  isModified?: boolean;
 }
 
 const locationSchema = new Schema<Location>({
@@ -76,6 +77,10 @@ const eventSchema = new Schema<EventDocument>({
   endTime: {
     type: String,
     required: false
+  },
+  isModified: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true
