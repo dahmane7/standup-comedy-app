@@ -25,7 +25,7 @@ export interface IEventPopulated {
   requirements: { minExperience: number; maxPerformers: number; duration: number; };
   createdAt?: string;
   updatedAt?: string;
-  isModified?: boolean;
+  modifiedByOrganizer?: boolean;
 }
 
 export interface IApplication {
@@ -374,8 +374,8 @@ function ApplicationsPage() {
 
   // Détermine si l'événement a été modifié par l'organisateur
   const wasEventUpdatedAfterApplication = (app: IApplication): boolean => {
-    // Utiliser le champ isModified qui est défini uniquement lors de vraies modifications
-    return Boolean(app?.event?.isModified);
+    // Utiliser le champ modifiedByOrganizer qui est défini uniquement lors de vraies modifications
+    return Boolean(app?.event?.modifiedByOrganizer);
   };
 
   return (

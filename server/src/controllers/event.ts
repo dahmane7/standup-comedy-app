@@ -134,7 +134,7 @@ export const updateEvent = async (req: AuthRequest, res: Response): Promise<void
 
     const updatedEvent = await EventModel.findByIdAndUpdate(
       eventId,
-      { $set: { ...req.body, isModified: true } },
+      { $set: { ...req.body, modifiedByOrganizer: true } },
       { new: true }
     );
 
