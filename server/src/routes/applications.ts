@@ -53,7 +53,7 @@ router.get('/', authMiddleware, asyncHandler(async (req: AuthRequest, res: Respo
   const applications = await ApplicationModel.find(dbFilter).select('+performanceDetails +message +organizerMessage')
     .populate({
       path: 'event',
-      select: 'title date startTime organizer location updatedAt',
+      select: 'title date startTime organizer location updatedAt modifiedByOrganizer',
       populate: {
         path: 'organizer',
         select: 'firstName lastName email'
