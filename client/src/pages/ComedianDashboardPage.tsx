@@ -164,13 +164,13 @@ function ComedianDashboardPage() {
         </div>
 
         <div style={cardsGridStyle}>
-          {/* Carte: Mes Candidatures */}
+          {/* Carte: Événements à venir (SWAPPED) */}
           <div style={cardStyle}>
             <div>
-              <p style={cardTitleStyle}>Mes Candidatures</p>
-              <p style={cardValueStyle}>{sentCount}</p>
+              <p style={cardTitleStyle}>Événements à venir</p>
+              <p style={cardValueStyle}>{upcomingCount}</p>
             </div>
-            <span style={{ fontSize: '2em', color: '#ff416c', alignSelf: 'flex-end' }}>📝</span>
+            <span style={{ fontSize: '2em', color: '#ff4b2b', alignSelf: 'flex-end' }}>✨</span>
           </div>
 
           {/* Carte: Candidatures Acceptées */}
@@ -182,13 +182,13 @@ function ComedianDashboardPage() {
             <span style={{ fontSize: '2em', color: '#28a745', alignSelf: 'flex-end' }}>✅</span>
           </div>
 
-          {/* Carte: Événements à venir (pour humoristes) */}
+          {/* Carte: Mes Candidatures (SWAPPED) */}
           <div style={cardStyle}>
             <div>
-              <p style={cardTitleStyle}>Événements à venir</p>
-              <p style={cardValueStyle}>{upcomingCount}</p> {/* Placeholder, à rendre dynamique */}
+              <p style={cardTitleStyle}>Mes Candidatures</p>
+              <p style={cardValueStyle}>{sentCount}</p>
             </div>
-            <span style={{ fontSize: '2em', color: '#ff4b2b', alignSelf: 'flex-end' }}>✨</span>
+            <span style={{ fontSize: '2em', color: '#ff416c', alignSelf: 'flex-end' }}>📝</span>
           </div>
         </div>
         {/* Ajout du camembert */}

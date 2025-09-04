@@ -371,14 +371,13 @@ function ApplicationsPage() {
     background: 'linear-gradient(to right, #ff416c, #ff4b2b)',
   };
 
-  // Détermine si l'événement a été modifié APRÈS sa création ET APRÈS la candidature
+  // Détermine si l'événement a été modifié APRÈS la candidature
   const wasEventUpdatedAfterApplication = (app: IApplication): boolean => {
-    if (!app?.event?.updatedAt || !app?.event?.createdAt || !app?.createdAt) return false;
+    if (!app?.event?.updatedAt || !app?.createdAt) return false;
     const updatedAt = new Date(app.event.updatedAt).getTime();
-    const createdAtEvent = new Date(app.event.createdAt).getTime();
     const createdAtApp = new Date(app.createdAt).getTime();
-    // Afficher UNIQUEMENT si l'événement a été modifié après sa création ET après la candidature
-    return updatedAt > createdAtEvent && updatedAt > createdAtApp;
+    // Afficher si l'événement a été modifié après la candidature
+    return updatedAt > createdAtApp;
   };
 
   return (
