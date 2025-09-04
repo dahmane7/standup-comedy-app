@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
-import { Event, Location, EventRequirements } from '../types';
+import { Location, EventRequirements } from '../types';
 
 export interface EventDocument extends Document {
   title: string;
