@@ -862,7 +862,7 @@ function MyEventsPage() {
                 return 'Lieu non spécifié';
               })()}</p>
               <p style={eventDetailStyle}>Organisateur: {event.organizer.firstName} {event.organizer.lastName}</p>
-              <p style={eventStatusStyle}>Statut: Accepté</p>
+              <p style={{ ...eventStatusStyle, color: '#28a745' }}>Statut: Accepté</p>
               <div style={actionButtonContainerStyle}>
                 <button
                   onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleWithdrawApplication(event); }}

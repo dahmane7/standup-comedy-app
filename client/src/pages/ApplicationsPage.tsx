@@ -189,7 +189,8 @@ function ApplicationsPage() {
     if (selectedTab !== 'all') {
       filtered = filtered.filter(app => app.status === selectedTab);
     }
-    if (comedianFilter !== 'all') {
+    // Filtre par humoriste: seulement utile côté ORGANIZER
+    if (user?.role === 'ORGANIZER' && comedianFilter !== 'all') {
       filtered = filtered.filter(app => app.comedian && app.comedian._id === comedianFilter);
     }
     // Tri
@@ -372,14 +373,12 @@ function ApplicationsPage() {
 
   // Détermine si l'événement a été modifié APRÈS sa création ET APRÈS la candidature
   const wasEventUpdatedAfterApplication = (app: IApplication): boolean => {
-    if (!app?.event?.updatedAt) return false;
+    if (!app?.event?.updatedAt || !app?.event?.createdAt || !app?.createdAt) return false;
     const updatedAt = new Date(app.event.updatedAt).getTime();
-    const createdAtEvent = app.event.createdAt ? new Date(app.event.createdAt).getTime() : NaN;
-    const createdAtApp = app.createdAt ? new Date(app.createdAt).getTime() : NaN;
-    // Nécessite: updatedAt > createdAtEvent (vraie modif) ET updatedAt > createdAtApp (postérieure à la candidature)
-    const isRealUpdate = !Number.isNaN(createdAtEvent) ? updatedAt > createdAtEvent : true;
-    const isAfterApplication = !Number.isNaN(createdAtApp) ? updatedAt > createdAtApp : false;
-    return Boolean(isRealUpdate && isAfterApplication);
+    const createdAtEvent = new Date(app.event.createdAt).getTime();
+    const createdAtApp = new Date(app.createdAt).getTime();
+    // Afficher UNIQUEMENT si l'événement a été modifié après sa création ET après la candidature
+    return updatedAt > createdAtEvent && updatedAt > createdAtApp;
   };
 
   return (
@@ -423,17 +422,19 @@ function ApplicationsPage() {
           >
             Refusées ({rejectedApplicationsCount})
           </button>
-          {/* Menu déroulant de filtrage par humoriste */}
-          <select
-            value={comedianFilter}
-            onChange={e => setComedianFilter(e.target.value)}
-            style={{ marginLeft: 'auto', padding: '8px', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', minWidth: 180 }}
-          >
-            <option value="all">Tous les humoristes</option>
-            {uniqueComedians.map(comedian => (
-              <option key={comedian.id} value={comedian.id}>{comedian.name}</option>
-            ))}
-          </select>
+          {/* Menu déroulant de filtrage par humoriste (ORGANIZER uniquement) */}
+          {user?.role === 'ORGANIZER' && (
+            <select
+              value={comedianFilter}
+              onChange={e => setComedianFilter(e.target.value)}
+              style={{ marginLeft: 'auto', padding: '8px', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', minWidth: 180 }}
+            >
+              <option value="all">Tous les humoristes</option>
+              {uniqueComedians.map(comedian => (
+                <option key={comedian.id} value={comedian.id}>{comedian.name}</option>
+              ))}
+            </select>
+          )}
 
           {/* Filtre par événement (organisateur uniquement) */}
           {user?.role === 'ORGANIZER' && (
@@ -516,7 +517,7 @@ function ApplicationsPage() {
                                   <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
                                     <button
                                       onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); alert('Confirmation enregistrée.'); }}
-                                      style={{ ...actionButtonStyle, backgroundColor: '#28a745' }}
+                                      style={{ ...actionButtonStyle, backgroundColor: '#ff9800' }}
                                     >
                                       Je reste inscrit
                                     </button>
