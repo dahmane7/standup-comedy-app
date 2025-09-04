@@ -23,6 +23,7 @@ export interface IEventPopulated {
   organizer: IUser; // Change to IUser
   status: 'DRAFT' | 'PUBLISHED' | 'CANCELLED' | 'COMPLETED';
   requirements: { minExperience: number; maxPerformers: number; duration: number; };
+  createdAt?: string;
   updatedAt?: string;
 }
 
@@ -369,6 +370,18 @@ function ApplicationsPage() {
     background: 'linear-gradient(to right, #ff416c, #ff4b2b)',
   };
 
+  // Détermine si l'événement a été modifié APRÈS sa création ET APRÈS la candidature
+  const wasEventUpdatedAfterApplication = (app: IApplication): boolean => {
+    if (!app?.event?.updatedAt) return false;
+    const updatedAt = new Date(app.event.updatedAt).getTime();
+    const createdAtEvent = app.event.createdAt ? new Date(app.event.createdAt).getTime() : NaN;
+    const createdAtApp = app.createdAt ? new Date(app.createdAt).getTime() : NaN;
+    // Nécessite: updatedAt > createdAtEvent (vraie modif) ET updatedAt > createdAtApp (postérieure à la candidature)
+    const isRealUpdate = !Number.isNaN(createdAtEvent) ? updatedAt > createdAtEvent : true;
+    const isAfterApplication = !Number.isNaN(createdAtApp) ? updatedAt > createdAtApp : false;
+    return Boolean(isRealUpdate && isAfterApplication);
+  };
+
   return (
     <div style={mainContainerStyle}>
       <Navbar />
@@ -483,7 +496,7 @@ function ApplicationsPage() {
                             >
                               <div>
                                 <h3 style={cardTitleStyle}>{app.event.title}</h3>
-                                {app.event.updatedAt && (new Date(app.event.date) >= todayMidnight) && new Date(app.event.updatedAt).getTime() > new Date(app.createdAt).getTime() && (
+                                {wasEventUpdatedAfterApplication(app) && (new Date(app.event.date) >= todayMidnight) && (
                                   <div style={{ display: 'inline-block', marginBottom: 8, padding: '4px 8px', borderRadius: 6, background: '#fff3cd', color: '#664d03', fontSize: 12, fontWeight: 600 }}>
                                     Modification apportée par l'organisateur à cet événement
                                   </div>
@@ -499,7 +512,7 @@ function ApplicationsPage() {
                                 )}
                                 {app.message && <p style={cardDetailStyle}>Message: {app.message}</p>}
                                 <span style={statusBadgeStyle(app.status)}>Statut: {translateStatus(app.status)}</span>
-                                {user?.role === 'COMEDIAN' && app.event.updatedAt && new Date(app.event.updatedAt).getTime() > new Date(app.createdAt).getTime() && (new Date(app.event.date) >= todayMidnight) && (
+                                {user?.role === 'COMEDIAN' && wasEventUpdatedAfterApplication(app) && (new Date(app.event.date) >= todayMidnight) && (
                                   <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
                                     <button
                                       onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); alert('Confirmation enregistrée.'); }}

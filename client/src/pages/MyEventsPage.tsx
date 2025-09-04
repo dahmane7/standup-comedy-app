@@ -265,15 +265,36 @@ function MyEventsPage() {
   }, [archivedEvents, appliedEventIds, user?.role]);
 
   // Fonction de filtrage pour les événements à venir
-  const getFilteredUpcomingEvents = () => {
-    if (completionFilter === 'all') return upcomingEvents;
-    if (completionFilter === 'complete') {
-      return upcomingEvents.filter(event => (event.participants?.length || 0) >= (event.requirements?.maxPerformers || 0));
+  // Événements ACCEPTÉS (à venir) pour l'humoriste
+  const acceptedUpcomingEvents = useMemo(() => {
+    if (user?.role === 'COMEDIAN' && comedianApplications) {
+      return upcomingEvents.filter((event) => {
+        const app = comedianApplications.find(a => a.event && a.event._id === event._id);
+        return app && app.status === 'ACCEPTED';
+      });
     }
-    if (completionFilter === 'incomplete') {
-      return upcomingEvents.filter(event => (event.participants?.length || 0) < (event.requirements?.maxPerformers || 0));
+    return [] as IEvent[];
+  }, [user?.role, comedianApplications, upcomingEvents]);
+
+  // Base des événements à venir POUR POSTULER (exclut les acceptés pour l'humoriste)
+  const upcomingEventsForApply = useMemo(() => {
+    if (user?.role === 'COMEDIAN') {
+      const acceptedIds = new Set(acceptedUpcomingEvents.map(e => e._id));
+      return upcomingEvents.filter(e => !acceptedIds.has(e._id));
     }
     return upcomingEvents;
+  }, [user?.role, acceptedUpcomingEvents, upcomingEvents]);
+
+  const getFilteredUpcomingEvents = () => {
+    const base = upcomingEventsForApply;
+    if (completionFilter === 'all') return base;
+    if (completionFilter === 'complete') {
+      return base.filter(event => (event.participants?.length || 0) >= (event.requirements?.maxPerformers || 0));
+    }
+    if (completionFilter === 'incomplete') {
+      return base.filter(event => (event.participants?.length || 0) < (event.requirements?.maxPerformers || 0));
+    }
+    return base;
   };
 
   const handleCardClick = (event: IEvent) => {
@@ -293,6 +314,27 @@ function MyEventsPage() {
   const handleApplyClick = (event: IEvent) => {
     setSelectedEvent(event);
     setShowApplyEventForm(true);
+  };
+
+  // Désinscription de l'humoriste (suppression de candidature)
+  const handleWithdrawApplication = async (event: IEvent) => {
+    if (!token || !user?._id) return;
+    try {
+      const app = comedianApplications?.find(a => a.event && a.event._id === event._id);
+      if (!app) return;
+      const config = {
+        headers: { Authorization: `Bearer ${token}` },
+      };
+      await api.delete(`/applications/${app._id}`, config);
+      alert('Vous avez été désinscrit de cet événement.');
+      // Rafraîchir les données
+      refetch();
+      refreshUser();
+      queryClient.invalidateQueries({ queryKey: ['comedianApplications'] });
+    } catch (error: any) {
+      console.error('Erreur lors de la désinscription:', error);
+      alert('Erreur: ' + (error.response?.data?.message || error.message));
+    }
   };
 
   const closeModal = () => {
@@ -799,9 +841,44 @@ function MyEventsPage() {
         </>
       )}
 
+      {/* Section Événements acceptés (humoriste) */}
+      {user?.role === 'COMEDIAN' && (
+        <div style={sectionStyle}>
+          <h2 style={sectionTitleStyle}>Événements acceptés</h2>
+          {acceptedUpcomingEvents.length === 0 && (
+            <p style={emptyStateStyle}>Aucun événement accepté à venir.</p>
+          )}
+          {acceptedUpcomingEvents.map((event) => (
+            <div key={event._id} style={eventCardStyle} onClick={() => handleCardClick(event)}>
+              <h3 style={eventTitleStyle}>{event.title}</h3>
+              <p style={eventDetailStyle}>Date: {new Date(event.date).toLocaleDateString()}</p>
+              <p style={eventDetailStyle}>Lieu: {(() => {
+                const location = event.location;
+                if (typeof location === 'object' && location !== null) {
+                  const address = location.address || '';
+                  const city = location.city || '';
+                  return `${address}${address && city ? ', ' : ''}${city}`.trim() || 'Lieu non spécifié';
+                }
+                return 'Lieu non spécifié';
+              })()}</p>
+              <p style={eventDetailStyle}>Organisateur: {event.organizer.firstName} {event.organizer.lastName}</p>
+              <p style={eventStatusStyle}>Statut: Accepté</p>
+              <div style={actionButtonContainerStyle}>
+                <button
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleWithdrawApplication(event); }}
+                  style={deleteButtonStyle}
+                >
+                  Me désinscrire
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div style={sectionStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '18px' }}>
-          <h2 style={sectionTitleStyle}>Événements à venir</h2>
+          <h2 style={sectionTitleStyle}>Événements à venir {user?.role === 'COMEDIAN' ? '(pour postuler)' : ''}</h2>
           <select
             value={completionFilter}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCompletionFilter(e.target.value as 'all' | 'complete' | 'incomplete')}
@@ -839,21 +916,28 @@ function MyEventsPage() {
             )}
             {user?.role === 'COMEDIAN' && (
               <div style={actionButtonContainerStyle}>
-                <button 
-                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleApplyClick(event); }}
-                  style={
-                    (appliedEventIds.has(event._id) || (event.participants?.length || 0) >= event.requirements.maxPerformers)
-                      ? disabledApplyButtonStyle 
-                      : applyButtonStyle
-                  }
-                  disabled={appliedEventIds.has(event._id) || (event.participants?.length || 0) >= event.requirements.maxPerformers}
-                >
-                  {appliedEventIds.has(event._id) 
-                    ? 'Déjà postulé' 
-                    : (event.participants?.length || 0) >= event.requirements.maxPerformers
-                    ? 'Événement complet'
-                    : 'Postuler'}
-                </button>
+                {!appliedEventIds.has(event._id) ? (
+                  <button 
+                    onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleApplyClick(event); }}
+                    style={
+                      (event.participants?.length || 0) >= event.requirements.maxPerformers
+                        ? disabledApplyButtonStyle 
+                        : applyButtonStyle
+                    }
+                    disabled={(event.participants?.length || 0) >= event.requirements.maxPerformers}
+                  >
+                    {(event.participants?.length || 0) >= event.requirements.maxPerformers
+                      ? 'Événement complet'
+                      : 'Postuler'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleWithdrawApplication(event); }}
+                    style={deleteButtonStyle}
+                  >
+                    Me désinscrire
+                  </button>
+                )}
                 {comedianApplications &&
                   (() => {
                     const app = comedianApplications.find(app => app.event && app.event._id === event._id);
@@ -891,15 +975,16 @@ function MyEventsPage() {
         ))}
       </div>
 
-      <div style={sectionStyle}>
-        <h2 style={sectionTitleStyle}>Événements archivés</h2>
-        {eventsLoading && <p style={emptyStateStyle}>Chargement des événements...</p>}
-        {eventsError && <p style={{ ...emptyStateStyle, color: '#dc3545' }}>Erreur: {eventsErrorMessage?.message}</p>}
-        {!eventsLoading && !eventsError && archivedEventsToShow.length === 0 && (
-          <p style={emptyStateStyle}>Aucun événement archivé.</p>
-        )}
-        {archivedEventsToShow.map((event) => (
-          <div key={event._id} style={eventCardStyle} onClick={() => handleCardClick(event)}>
+      {user?.role !== 'COMEDIAN' && (
+        <div style={sectionStyle}>
+          <h2 style={sectionTitleStyle}>Événements archivés</h2>
+          {eventsLoading && <p style={emptyStateStyle}>Chargement des événements...</p>}
+          {eventsError && <p style={{ ...emptyStateStyle, color: '#dc3545' }}>Erreur: {eventsErrorMessage?.message}</p>}
+          {!eventsLoading && !eventsError && archivedEventsToShow.length === 0 && (
+            <p style={emptyStateStyle}>Aucun événement archivé.</p>
+          )}
+          {archivedEventsToShow.map((event) => (
+            <div key={event._id} style={eventCardStyle} onClick={() => handleCardClick(event)}>
             <h3 style={eventTitleStyle}>{event.title}</h3>
             <p style={eventDetailStyle}>Date: {new Date(event.date).toLocaleDateString()}</p>
             <p style={eventDetailStyle}>Lieu: {(() => {
@@ -984,9 +1069,10 @@ function MyEventsPage() {
                 </button>
               </div>
             )}
-          </div>
-        ))}
-      </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <Modal isOpen={isModalOpen} onClose={closeModal} title="Détails de l'événement">
         {selectedEvent && (
