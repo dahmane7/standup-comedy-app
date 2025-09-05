@@ -708,6 +708,25 @@ const DirectoryPage: React.FC = () => {
                     </div>
                     <div style={{ fontSize: '11px', color: '#666' }}>Score NPS</div>
                   </div>
+
+                  {/* Nouveau: Taux de participation */}
+                  <div style={{ padding: '15px', border: '1px solid #14b8a6', borderRadius: '8px', textAlign: 'center', backgroundColor: '#f0fdfa' }}>
+                    <div style={{ fontSize: '20px', marginBottom: '5px' }}>📈</div>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#14b8a6' }}>
+                      {(() => {
+                        const participations = selectedUser.stats?.totalEvents || 0;
+                        const absences = selectedUser.stats?.absences || 0;
+                        const total = participations + absences;
+                        return total > 0 ? Math.round((participations / total) * 100) : 0;
+                      })()}%
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#0f766e' }}>
+                      Taux participation
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#0f766e', marginTop: '2px' }}>
+                      {selectedUser.stats?.totalEvents || 0} / {(selectedUser.stats?.totalEvents || 0) + (selectedUser.stats?.absences || 0)}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
