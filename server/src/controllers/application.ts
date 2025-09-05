@@ -183,8 +183,17 @@ export const updateApplicationStatus = async (req: AuthRequest, res: Response): 
       // Logique pour applicationsAccepted
       if (newStatus === 'ACCEPTED' && oldStatus !== 'ACCEPTED') {
         comedian.stats.applicationsAccepted = (comedian.stats.applicationsAccepted || 0) + 1;
+        
+        // 🎪 NOUVEAU: Incrémenter automatiquement les participations (totalEvents) lors de l'acceptation
+        comedian.stats.totalEvents = (comedian.stats.totalEvents || 0) + 1;
+        console.log(`✅ Participation automatiquement ajoutée pour ${comedian.firstName} ${comedian.lastName} - Total: ${comedian.stats.totalEvents}`);
+        
       } else if (newStatus !== 'ACCEPTED' && oldStatus === 'ACCEPTED') {
         comedian.stats.applicationsAccepted = Math.max(0, (comedian.stats.applicationsAccepted || 0) - 1);
+        
+        // 🎪 NOUVEAU: Décrémenter les participations si on passe d'ACCEPTED à autre chose
+        comedian.stats.totalEvents = Math.max(0, (comedian.stats.totalEvents || 0) - 1);
+        console.log(`❌ Participation retirée pour ${comedian.firstName} ${comedian.lastName} - Total: ${comedian.stats.totalEvents}`);
       }
       
       // Logique pour applicationsRejected
