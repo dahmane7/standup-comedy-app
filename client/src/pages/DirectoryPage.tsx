@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import Navbar from '../components/Navbar';
 import ComedianApplicationsModal from '../components/ComedianApplicationsModal';
+import api from '../services/api';
 
 interface UserStats {
   totalEvents?: number;
@@ -162,23 +163,26 @@ const DirectoryPage: React.FC = () => {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/users`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Erreur lors du chargement des utilisateurs');
+      console.log('🔍 Chargement des utilisateurs...');
+      console.log('👤 Utilisateur actuel:', user);
+      
+      const response = await api.get('/auth/users');
+      console.log('📊 Réponse API reçue:', response.data);
+      
+      setUsers(response.data.users || []);
+    } catch (error: any) {
+      console.error('❌ Erreur lors du chargement des utilisateurs:', error);
+      console.error('📋 Détails de l\'erreur:', error.response?.data);
+      console.error('🔢 Status de l\'erreur:', error.response?.status);
+      
+      let errorMessage = 'Erreur inconnue';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
       }
-
-      const data = await response.json();
-      setUsers(data.users || []);
-    } catch (error) {
-      console.error('Erreur lors du chargement des utilisateurs:', error);
-      alert('Impossible de charger le répertoire des utilisateurs');
+      
+      alert(`Impossible de charger le répertoire des utilisateurs: ${errorMessage}`);
     } finally {
       setLoading(false);
     }

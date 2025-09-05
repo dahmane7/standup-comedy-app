@@ -156,10 +156,15 @@ export const getProfile = async (req: Request, res: Response) => {
 // GET /api/auth/users - Récupérer tous les utilisateurs (SUPER_ADMIN seulement)
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
+    console.log('🔍 [DEBUG] getAllUsers - Début de la fonction');
     const userRole = (req as any).user?.role;
+    const userId = (req as any).user?.id;
+    
+    console.log('👤 [DEBUG] Utilisateur qui fait la requête:', { userId, userRole });
     
     // Vérifier que c'est un super admin
     if (userRole !== 'SUPER_ADMIN') {
+      console.log('❌ [DEBUG] Accès refusé - Role:', userRole);
       return res.status(403).json({ message: 'Accès refusé. Seuls les super administrateurs peuvent accéder à cette ressource.' });
     }
 
