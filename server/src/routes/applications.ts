@@ -7,6 +7,7 @@ import { IPopulatedApplication, IPopulatedEvent } from '../types';
 import { IPopulatedUser } from '../types/user';
 import { Types } from 'mongoose';
 import { EventModel } from '../models/Event';
+import { UserModel } from '../models/User';
 import { createApplication } from '../controllers/application';
 import { sendApplicationStatusToComedian } from '../services/emailService';
 import jwt from 'jsonwebtoken';
@@ -130,6 +131,9 @@ router.put('/:applicationId/status', authMiddleware, validate(updateApplicationS
     updateData.organizerMessage = organizerMessage;
   }
 
+  // 🚨 IMPORTANT: Récupérer l'ancien statut AVANT la mise à jour pour la logique des stats
+  const oldStatus = application.status;
+  
   const updatedApplication = await ApplicationModel.findByIdAndUpdate(
     applicationId,
     updateData,
@@ -145,6 +149,54 @@ router.put('/:applicationId/status', authMiddleware, validate(updateApplicationS
       eventId,
       { $addToSet: { participants: comedianId } } // $addToSet évite les doublons
     );
+  }
+
+  // 🎪 AJOUT: Mise à jour des statistiques de l'humoriste (MÊME LOGIQUE que dans application.ts)
+  if (updatedApplication && updatedApplication.comedian) {
+    const comedianId = (updatedApplication.comedian as any)._id || updatedApplication.comedian;
+    const comedian = await UserModel.findById(comedianId);
+
+    if (comedian) {
+      if (!comedian.stats) {
+        comedian.stats = {};
+      }
+      
+      console.log(`📊 [STATS UPDATE] ${comedian.firstName} ${comedian.lastName}: ${oldStatus} → ${status}`);
+      
+      // Logique pour applicationsAccepted
+      if (status === 'ACCEPTED' && oldStatus !== 'ACCEPTED') {
+        comedian.stats.applicationsAccepted = (comedian.stats.applicationsAccepted || 0) + 1;
+        
+        // 🎪 NOUVEAU: Incrémenter automatiquement les participations (totalEvents) lors de l'acceptation
+        comedian.stats.totalEvents = (comedian.stats.totalEvents || 0) + 1;
+        console.log(`✅ Participation automatiquement ajoutée pour ${comedian.firstName} ${comedian.lastName} - Total: ${comedian.stats.totalEvents}`);
+        
+      } else if (status !== 'ACCEPTED' && oldStatus === 'ACCEPTED') {
+        comedian.stats.applicationsAccepted = Math.max(0, (comedian.stats.applicationsAccepted || 0) - 1);
+        
+        // 🎪 NOUVEAU: Décrémenter les participations si on passe d'ACCEPTED à autre chose
+        comedian.stats.totalEvents = Math.max(0, (comedian.stats.totalEvents || 0) - 1);
+        console.log(`❌ Participation retirée pour ${comedian.firstName} ${comedian.lastName} - Total: ${comedian.stats.totalEvents}`);
+      }
+      
+      // Logique pour applicationsRejected
+      if (status === 'REJECTED' && oldStatus !== 'REJECTED') {
+        comedian.stats.applicationsRejected = (comedian.stats.applicationsRejected || 0) + 1;
+      } else if (status !== 'REJECTED' && oldStatus === 'REJECTED') {
+        comedian.stats.applicationsRejected = Math.max(0, (comedian.stats.applicationsRejected || 0) - 1);
+      }
+      
+      // Logique pour applicationsPending
+      if (status === 'PENDING' && oldStatus !== 'PENDING') {
+        comedian.stats.applicationsPending = (comedian.stats.applicationsPending || 0) + 1;
+      } else if (status !== 'PENDING' && oldStatus === 'PENDING') {
+        comedian.stats.applicationsPending = Math.max(0, (comedian.stats.applicationsPending || 0) - 1);
+      }
+      
+      comedian.markModified('stats');
+      await comedian.save();
+      console.log(`💾 Stats sauvegardées pour ${comedian.firstName} ${comedian.lastName}`);
+    }
   }
 
   // Envoi du mail à l'humoriste lors de l'acceptation ou du refus
