@@ -15,10 +15,8 @@ import { config } from '../config/env';
 const router = express.Router();
 
 // Async handler wrapper
-const asyncHandler = (fn: (req: Request | AuthRequest, res: Response) => Promise<any>) => {
-  return (req: Request | AuthRequest, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res)).catch(next);
-  };
+const asyncHandler = (fn: any) => (req: any, res: any, next: any) => {
+  Promise.resolve(fn(req, res)).catch(next);
 };
 
 // Route pour créer une nouvelle candidature (protégée) - utilise le contrôleur avec envoi d'email
@@ -175,51 +173,55 @@ router.put('/:applicationId/status', authMiddleware, validate(updateApplicationS
   res.json(updatedApplication);
 }));
 
-// Route pour confirmer la participation après modification d'événement (protégée)
-router.post('/:applicationId/confirm-participation', authMiddleware, asyncHandler(async (req: AuthRequest, res: Response) => {
+// Route pour confirmer la participation - NOUVELLE APPROCHE
+router.patch('/:applicationId/confirm', authMiddleware, asyncHandler(async (req: AuthRequest, res: Response) => {
+  console.log('🎪 DEBUT confirm participation');
+  console.log('🎪 Application ID:', req.params.applicationId);
+  console.log('🎪 User ID:', req.user?.id);
+  
+  const { applicationId } = req.params;
+  const comedianId = req.user?.id;
+
+  if (!comedianId) {
+    console.log('❌ Non authentifié');
+    return res.status(401).json({ message: 'Non authentifié' });
+  }
+
   try {
-    const { applicationId } = req.params;
-    const comedianId = req.user?.id;
-
-    console.log('🎪 Confirm participation - Application ID:', applicationId);
-    console.log('🎪 Confirm participation - Comedian ID:', comedianId);
-
-    if (!comedianId) {
-      return res.status(401).json({ message: 'Utilisateur non authentifié' });
-    }
-
-    // Vérifier que la candidature existe et appartient au humoriste
+    // Trouver la candidature
     const application = await ApplicationModel.findById(applicationId);
+    console.log('🔍 Application trouvée:', !!application);
+    
     if (!application) {
-      console.log('❌ Application non trouvée');
       return res.status(404).json({ message: 'Candidature non trouvée' });
     }
 
-    console.log('✅ Application trouvée:', application.comedian.toString());
-
+    // Vérifier propriétaire
     if (application.comedian.toString() !== comedianId) {
-      console.log('❌ Non autorisé - comedian mismatch');
-      return res.status(403).json({ message: 'Non autorisé à confirmer cette candidature' });
+      console.log('❌ Pas le bon propriétaire');
+      return res.status(403).json({ message: 'Non autorisé' });
     }
 
-    // Marquer que l'humoriste a confirmé sa participation
-    const eventId = application.event;
-    console.log('🎯 Event ID:', eventId);
+    // Mettre à jour l'événement
+    const event = await EventModel.findByIdAndUpdate(
+      application.event,
+      { modifiedByOrganizer: false },
+      { new: true }
+    );
     
-    const event = await EventModel.findById(eventId);
-    if (event) {
-      console.log('✅ Event trouvé, reset modifiedByOrganizer');
-      event.modifiedByOrganizer = false; // Reset pour cacher les boutons
-      await event.save();
-      console.log('✅ Event sauvegardé');
-    } else {
-      console.log('❌ Event non trouvé');
-    }
-
-    res.json({ message: 'Participation confirmée avec succès' });
+    console.log('✅ Event modifié:', !!event);
+    
+    res.json({ 
+      success: true, 
+      message: 'Participation confirmée' 
+    });
+    
   } catch (error) {
-    console.error('❌ Erreur confirm participation:', error);
-    res.status(500).json({ message: 'Erreur serveur lors de la confirmation' });
+    console.error('❌ ERREUR:', error);
+    res.status(500).json({ 
+      message: 'Erreur serveur',
+      error: error instanceof Error ? error.message : 'Erreur inconnue'
+    });
   }
 }));
 
