@@ -11,6 +11,7 @@ export interface EventDocument extends Document {
   requirements: EventRequirements;
   applications: Types.ObjectId[];
   participants: Types.ObjectId[];
+  withdrawnComedians: Types.ObjectId[]; // Nouveaux: humoristes qui se sont désinscrits
   startTime?: string;
   endTime?: string;
   modifiedByOrganizer?: boolean;
@@ -66,6 +67,11 @@ const eventSchema = new Schema<EventDocument>({
     ref: 'Application'
   }],
   participants: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    default: []
+  }],
+  withdrawnComedians: [{
     type: Schema.Types.ObjectId,
     ref: 'User',
     default: []

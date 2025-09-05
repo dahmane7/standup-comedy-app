@@ -53,7 +53,7 @@ router.get('/', authMiddleware, asyncHandler(async (req: AuthRequest, res: Respo
     query.status = 'published'; // Default to show published for others (e.g. admins if they browse like this)
   }
 
-  const events = await EventModel.find(query).populate('participants').populate('organizer');
+  const events = await EventModel.find(query).select('+withdrawnComedians').populate('participants').populate('organizer');
   
   // Debug temporaire pour voir quels événements sont retournés
   console.log(`🔍 [DEBUG] Route GET /api/events - Role: ${userRole}, Query:`, JSON.stringify(query, null, 2));
@@ -68,7 +68,7 @@ router.get('/', authMiddleware, asyncHandler(async (req: AuthRequest, res: Respo
 // Route pour récupérer un événement par son ID
 router.get('/:eventId', asyncHandler(async (req: Request, res: Response) => {
   const { eventId } = req.params;
-  const event = await EventModel.findById(eventId);
+  const event = await EventModel.findById(eventId).select('+withdrawnComedians');
   if (!event) {
     return res.status(404).json({ message: 'Événement non trouvé' });
   }

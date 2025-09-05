@@ -3,6 +3,21 @@ import { useAuth } from '../hooks/useAuth';
 import Navbar from '../components/Navbar';
 import ComedianApplicationsModal from '../components/ComedianApplicationsModal';
 
+interface UserStats {
+  totalEvents?: number;
+  totalRevenue?: number;
+  averageRating?: number;
+  viralScore?: number;
+  profileViews?: number;
+  lastActivity?: string;
+  applicationsSent?: number;
+  applicationsAccepted?: number;
+  applicationsRejected?: number;
+  applicationsPending?: number;
+  netPromoterScore?: number;
+  absences?: number;
+}
+
 interface User {
   id: string;
   firstName: string;
@@ -16,6 +31,7 @@ interface User {
   experienceLevel?: string;
   companyName?: string;
   address?: string; // Added for organizers
+  stats?: UserStats; // Ajout des statistiques
 }
 
 const DirectoryPage: React.FC = () => {
@@ -31,6 +47,8 @@ const DirectoryPage: React.FC = () => {
     lastName: string;
     email: string;
   } | null>(null);
+  const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { user } = useAuth();
 
   // Styles
@@ -211,9 +229,26 @@ const DirectoryPage: React.FC = () => {
     }
   };
 
+  const handleUserStatsClick = (userData: User, event: React.MouseEvent) => {
+    event.stopPropagation(); // Empêcher le clic sur la modal des candidatures
+    setSelectedUser(userData);
+    setIsStatsModalOpen(true);
+  };
+
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedComedian(null);
+  };
+
+  const closeStatsModal = () => {
+    setIsStatsModalOpen(false);
+    setSelectedUser(null);
+  };
+
+  const calculateSuccessRate = (stats?: UserStats) => {
+    if (!stats || !stats.applicationsSent) return 0;
+    const accepted = stats.applicationsAccepted || 0;
+    return Math.round((accepted / stats.applicationsSent) * 100);
   };
 
   // Vérifier l'accès super admin
@@ -409,9 +444,29 @@ const DirectoryPage: React.FC = () => {
                   )}
 
                   <div style={{ marginTop: '15px', paddingTop: '10px', borderTop: '1px solid #eee' }}>
-                    <p style={{ margin: 0, fontSize: '12px', color: '#888' }}>
-                      Inscrit le {new Date(userData.createdAt).toLocaleDateString('fr-FR')}
-                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <p style={{ margin: 0, fontSize: '12px', color: '#888' }}>
+                        Inscrit le {new Date(userData.createdAt).toLocaleDateString('fr-FR')}
+                      </p>
+                      <button
+                        onClick={(e) => handleUserStatsClick(userData, e)}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          backgroundColor: '#4caf50',
+                          color: 'white',
+                          fontSize: '12px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s ease',
+                        }}
+                        onMouseOver={(e) => (e.target as HTMLElement).style.backgroundColor = '#45a049'}
+                        onMouseOut={(e) => (e.target as HTMLElement).style.backgroundColor = '#4caf50'}
+                      >
+                        📊 Voir statistiques
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -438,6 +493,281 @@ const DirectoryPage: React.FC = () => {
         onClose={closeModal}
         comedian={selectedComedian}
       />
+
+      {/* Modal des statistiques utilisateur */}
+      {isStatsModalOpen && selectedUser && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+          padding: '20px',
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '30px',
+            maxWidth: '900px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            position: 'relative',
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '2px solid #f0f0f0', paddingBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <div style={{ fontSize: '32px' }}>📊</div>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: '#333' }}>
+                    {selectedUser.firstName} {selectedUser.lastName}
+                  </h2>
+                  <span style={{
+                    display: 'inline-block',
+                    padding: '4px 12px',
+                    borderRadius: '20px',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    color: 'white',
+                    backgroundColor: selectedUser.role === 'COMEDIAN' ? '#9c27b0' : '#2196f3',
+                    marginTop: '5px'
+                  }}>
+                    {getRoleLabel(selectedUser.role)}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={closeStatsModal}
+                style={{
+                  backgroundColor: '#ff4757',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '40px',
+                  height: '40px',
+                  fontSize: '18px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Informations générales */}
+            <div style={{ marginBottom: '30px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#333', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                👤 Informations générales
+              </h3>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+                gap: '15px',
+                backgroundColor: '#f8f9fa',
+                padding: '20px',
+                borderRadius: '8px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>📧</span>
+                  <span style={{ fontSize: '14px' }}>{selectedUser.email}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>📞</span>
+                  <span style={{ fontSize: '14px' }}>{selectedUser.phone || 'Non renseigné'}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>📍</span>
+                  <span style={{ fontSize: '14px' }}>{selectedUser.city || 'Non renseigné'}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>📅</span>
+                  <span style={{ fontSize: '14px' }}>Inscrit le {new Date(selectedUser.createdAt).toLocaleDateString('fr-FR')}</span>
+                </div>
+              </div>
+              
+              {selectedUser.stageName && (
+                <div style={{ marginTop: '15px', padding: '15px', backgroundColor: '#f3e5f5', borderRadius: '8px' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#9c27b0' }}>
+                    🎭 Nom de scène: "{selectedUser.stageName}"
+                  </span>
+                </div>
+              )}
+              
+              {selectedUser.companyName && (
+                <div style={{ marginTop: '15px', padding: '15px', backgroundColor: '#e3f2fd', borderRadius: '8px' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#2196f3' }}>
+                    🏢 Entreprise: {selectedUser.companyName}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Statistiques de performance */}
+            {selectedUser.role === 'COMEDIAN' && (
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#333', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  📈 Statistiques de performance
+                </h3>
+                
+                {/* Métriques principales */}
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                  gap: '20px',
+                  marginBottom: '25px'
+                }}>
+                  <div style={{ padding: '20px', backgroundColor: '#e3f2fd', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>📅</div>
+                    <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#2196f3', marginBottom: '5px' }}>
+                      {selectedUser.stats?.totalEvents || 0}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#1976d2' }}>Événements participés</div>
+                  </div>
+
+                  <div style={{ padding: '20px', backgroundColor: '#f3e5f5', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>📝</div>
+                    <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#9c27b0', marginBottom: '5px' }}>
+                      {selectedUser.stats?.applicationsSent || 0}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#7b1fa2' }}>Candidatures envoyées</div>
+                  </div>
+
+                  <div style={{ padding: '20px', backgroundColor: '#e8f5e8', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>✅</div>
+                    <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#4caf50', marginBottom: '5px' }}>
+                      {selectedUser.stats?.applicationsAccepted || 0}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#2e7d32' }}>
+                      Acceptées ({calculateSuccessRate(selectedUser.stats)}% de succès)
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '20px', backgroundColor: '#fff3e0', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>⭐</div>
+                    <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#ff9800', marginBottom: '5px' }}>
+                      {selectedUser.stats?.viralScore || 0}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#f57c00' }}>Score viral</div>
+                  </div>
+                </div>
+
+                {/* Statistiques détaillées */}
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
+                  gap: '15px',
+                  marginBottom: '25px'
+                }}>
+                  <div style={{ padding: '15px', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '20px', marginBottom: '5px' }}>❌</div>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#f44336' }}>
+                      {selectedUser.stats?.applicationsRejected || 0}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#666' }}>Candidatures rejetées</div>
+                  </div>
+
+                  <div style={{ padding: '15px', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '20px', marginBottom: '5px' }}>⏳</div>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ff9800' }}>
+                      {selectedUser.stats?.applicationsPending || 0}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#666' }}>En attente</div>
+                  </div>
+
+                  <div style={{ padding: '15px', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '20px', marginBottom: '5px' }}>😴</div>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#f44336' }}>
+                      {selectedUser.stats?.absences || 0}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#666' }}>Absences</div>
+                  </div>
+
+                  <div style={{ padding: '15px', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '20px', marginBottom: '5px' }}>👁️</div>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#607d8b' }}>
+                      {selectedUser.stats?.profileViews || 0}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#666' }}>Vues du profil</div>
+                  </div>
+
+                  <div style={{ padding: '15px', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '20px', marginBottom: '5px' }}>📊</div>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#673ab7' }}>
+                      {selectedUser.stats?.netPromoterScore || 0}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#666' }}>Score NPS</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Statistiques pour organisateurs */}
+            {selectedUser.role === 'ORGANIZER' && (
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#333', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  📊 Statistiques d'organisateur
+                </h3>
+                
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                  gap: '20px'
+                }}>
+                  <div style={{ padding: '20px', backgroundColor: '#e3f2fd', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>📅</div>
+                    <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#2196f3', marginBottom: '5px' }}>
+                      {selectedUser.stats?.totalEvents || 0}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#1976d2' }}>Événements organisés</div>
+                  </div>
+
+                  <div style={{ padding: '20px', backgroundColor: '#e8f5e8', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>⭐</div>
+                    <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#4caf50', marginBottom: '5px' }}>
+                      {selectedUser.stats?.averageRating || 0}/5
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#2e7d32' }}>Note moyenne</div>
+                  </div>
+
+                  <div style={{ padding: '20px', backgroundColor: '#f3e5f5', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>👁️</div>
+                    <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#9c27b0', marginBottom: '5px' }}>
+                      {selectedUser.stats?.profileViews || 0}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#7b1fa2' }}>Vues du profil</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Note si pas de statistiques */}
+            {(!selectedUser.stats || Object.keys(selectedUser.stats).length === 0) && (
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '40px 20px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+                marginTop: '20px'
+              }}>
+                <div style={{ fontSize: '48px', marginBottom: '15px' }}>📊</div>
+                <h3 style={{ color: '#666', fontSize: '18px', marginBottom: '10px' }}>
+                  Aucune statistique disponible
+                </h3>
+                <p style={{ color: '#888', fontSize: '14px' }}>
+                  Les statistiques seront disponibles une fois que l'utilisateur aura commencé à utiliser la plateforme.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

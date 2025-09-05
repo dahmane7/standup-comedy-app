@@ -193,11 +193,21 @@ router.delete('/:applicationId', authMiddleware, asyncHandler(async (req: AuthRe
   }
 
   // Si la candidature était ACCEPTED, retirer le comédien des participants de l'événement
+  // ET ajouter le comédien aux withdrawnComedians pour empêcher une nouvelle candidature
   try {
-    if (application.status === 'ACCEPTED' && application.event && application.comedian) {
+    if (application.event && application.comedian) {
       const eventId = (application.event as any)._id || application.event;
       const comedianId = (application.comedian as any)._id || application.comedian;
-      await EventModel.findByIdAndUpdate(eventId, { $pull: { participants: comedianId } });
+      
+      // Si accepté, retirer des participants
+      if (application.status === 'ACCEPTED') {
+        await EventModel.findByIdAndUpdate(eventId, { $pull: { participants: comedianId } });
+      }
+      
+      // Dans tous les cas, ajouter aux withdrawnComedians pour empêcher re-candidature
+      await EventModel.findByIdAndUpdate(eventId, { 
+        $addToSet: { withdrawnComedians: comedianId } 
+      });
     }
   } catch (e) {
     console.error('Erreur lors du retrait du participant de l\'événement:', e);

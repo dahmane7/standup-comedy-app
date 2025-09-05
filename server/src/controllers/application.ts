@@ -46,6 +46,15 @@ export const createApplication = async (req: AuthRequest, res: Response): Promis
       return;
     }
 
+    // Vérifier si l'humoriste s'est déjà désinscrit de cet événement
+    const hasWithdrawn = event.withdrawnComedians && event.withdrawnComedians.includes(comedianObjectId);
+    if (hasWithdrawn) {
+      res.status(403).json({ 
+        message: 'You cannot reapply to an event after withdrawing your application' 
+      });
+      return;
+    }
+
     // Créer la candidature
     const application = new ApplicationModel({
       event: eventObjectId,

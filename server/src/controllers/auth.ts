@@ -169,7 +169,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
     const users = await UserModel.find({ 
       role: { $in: ['COMEDIAN', 'ORGANIZER'] } 
     })
-    .select('-password') // Exclure les mots de passe
+    .select('-password +stats') // Exclure les mots de passe mais inclure les stats
     .populate('profile')
     .populate('organizerProfile')
     .sort({ createdAt: -1 }); // Trier par date de création (plus récents en premier)
@@ -188,6 +188,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
       role: user.role,
       city: (user.organizerProfile && user.organizerProfile.location && user.organizerProfile.location.city) || user.city || 'Non renseigné',
       createdAt: user.createdAt,
+      stats: user.stats || {}, // Inclure les statistiques
       // Informations spécifiques selon le rôle
       ...(user.role === 'COMEDIAN' && user.profile && {
         stageName: (user.profile as any).stageName || 'Non renseigné',
