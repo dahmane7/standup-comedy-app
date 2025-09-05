@@ -177,32 +177,50 @@ router.put('/:applicationId/status', authMiddleware, validate(updateApplicationS
 
 // Route pour confirmer la participation après modification d'événement (protégée)
 router.post('/:applicationId/confirm-participation', authMiddleware, asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { applicationId } = req.params;
-  const comedianId = req.user?.id;
+  try {
+    const { applicationId } = req.params;
+    const comedianId = req.user?.id;
 
-  if (!comedianId) {
-    return res.status(401).json({ message: 'Utilisateur non authentifié' });
+    console.log('🎪 Confirm participation - Application ID:', applicationId);
+    console.log('🎪 Confirm participation - Comedian ID:', comedianId);
+
+    if (!comedianId) {
+      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+    }
+
+    // Vérifier que la candidature existe et appartient au humoriste
+    const application = await ApplicationModel.findById(applicationId);
+    if (!application) {
+      console.log('❌ Application non trouvée');
+      return res.status(404).json({ message: 'Candidature non trouvée' });
+    }
+
+    console.log('✅ Application trouvée:', application.comedian.toString());
+
+    if (application.comedian.toString() !== comedianId) {
+      console.log('❌ Non autorisé - comedian mismatch');
+      return res.status(403).json({ message: 'Non autorisé à confirmer cette candidature' });
+    }
+
+    // Marquer que l'humoriste a confirmé sa participation
+    const eventId = application.event;
+    console.log('🎯 Event ID:', eventId);
+    
+    const event = await EventModel.findById(eventId);
+    if (event) {
+      console.log('✅ Event trouvé, reset modifiedByOrganizer');
+      event.modifiedByOrganizer = false; // Reset pour cacher les boutons
+      await event.save();
+      console.log('✅ Event sauvegardé');
+    } else {
+      console.log('❌ Event non trouvé');
+    }
+
+    res.json({ message: 'Participation confirmée avec succès' });
+  } catch (error) {
+    console.error('❌ Erreur confirm participation:', error);
+    res.status(500).json({ message: 'Erreur serveur lors de la confirmation' });
   }
-
-  // Vérifier que la candidature existe et appartient au humoriste
-  const application = await ApplicationModel.findById(applicationId).populate('event');
-  if (!application) {
-    return res.status(404).json({ message: 'Candidature non trouvée' });
-  }
-
-  if (application.comedian.toString() !== comedianId) {
-    return res.status(403).json({ message: 'Non autorisé à confirmer cette candidature' });
-  }
-
-  // Marquer que l'humoriste a confirmé sa participation
-  // On peut ajouter un champ "confirmedParticipation" ou simplement reset modifiedByOrganizer
-  const event = await EventModel.findById(application.event);
-  if (event) {
-    event.modifiedByOrganizer = false; // Reset pour cacher les boutons
-    await event.save();
-  }
-
-  res.json({ message: 'Participation confirmée avec succès' });
 }));
 
 // Route pour supprimer une candidature (protégée)
