@@ -515,16 +515,35 @@ function ApplicationsPage() {
                                     <button
                                       onClick={async (e: React.MouseEvent<HTMLButtonElement>) => { 
                                         e.stopPropagation(); 
+                                        console.log('🎪 DEBUT clic bouton confirmation');
+                                        console.log('🎪 Application complète:', app);
+                                        console.log('🎪 Application._id:', app._id);
+                                        console.log('🎪 Event:', app.event);
+                                        console.log('🎪 User role:', user?.role);
+                                        console.log('🎪 User ID:', user?._id);
+                                        
                                         try {
-                                          // Faire l'appel API pour confirmer la participation
-                                          const response = await api.post(`/applications/${app._id}/confirm-participation`);
+                                          // Vérifier d'abord si l'application existe
+                                          console.log('🔍 Vérification existence application...');
+                                          const checkResponse = await api.get(`/applications/${app._id}`, {
+                                            headers: { Authorization: `Bearer ${token}` }
+                                          });
+                                          console.log('✅ Application existe:', checkResponse.data);
+                                          
+                                          // Puis confirmer la participation
+                                          console.log('🎪 Appel PATCH /confirm...');
+                                          const response = await api.patch(`/applications/${app._id}/confirm`, {}, {
+                                            headers: { Authorization: `Bearer ${token}` }
+                                          });
+                                          console.log('🎪 Réponse API:', response.data);
+                                          
                                           if (response.status === 200) {
-                                            alert('Confirmation enregistrée. Les boutons vont disparaître.');
+                                            alert('Confirmation enregistrée ! Les boutons vont disparaître.');
                                             fetchApplications(); // Recharger pour cacher les boutons
                                           }
                                         } catch (error) {
-                                          console.error('Erreur confirmation:', error);
-                                          alert('Erreur lors de la confirmation. Veuillez réessayer.');
+                                          console.error('🎪 Erreur complète:', error);
+                                          alert('Erreur lors de la confirmation. Vérifiez la console.');
                                         }
                                       }}
                                       style={{ ...actionButtonStyle, backgroundColor: '#ff9800' }}
