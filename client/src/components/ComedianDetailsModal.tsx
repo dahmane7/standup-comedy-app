@@ -480,7 +480,8 @@ function ComedianDetailsModal({ isOpen, onClose, comedian }: ComedianDetailsModa
                       const participations = comedian.stats.totalEvents || 0;
                       const absences = comedian.stats?.absences || 0;
                       const total = participations + absences;
-                      return total > 0 ? Math.round((participations / total) * 100) : 100;
+                      // Si aucune participation ni absence, retourner 0%
+                      return total > 0 ? Math.round((participations / total) * 100) : 0;
                     })()}%
                   </span>
                 </div>
