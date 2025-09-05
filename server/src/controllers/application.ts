@@ -31,7 +31,7 @@ export const createApplication = async (req: AuthRequest, res: Response): Promis
     // Vérifier si l'événement existe
     const event = await EventModel.findById(eventObjectId);
     if (!event) {
-      res.status(404).json({ message: 'Event not found' });
+      res.status(404).json({ message: 'Événement non trouvé' });
       return;
     }
 
@@ -42,7 +42,7 @@ export const createApplication = async (req: AuthRequest, res: Response): Promis
     });
 
     if (existingApplication) {
-      res.status(400).json({ message: 'You have already applied to this event' });
+      res.status(400).json({ message: 'Vous avez déjà postulé à cet événement' });
       return;
     }
 
@@ -50,7 +50,7 @@ export const createApplication = async (req: AuthRequest, res: Response): Promis
     const hasWithdrawn = event.withdrawnComedians && event.withdrawnComedians.includes(comedianObjectId);
     if (hasWithdrawn) {
       res.status(403).json({ 
-        message: 'You cannot reapply to an event after withdrawing your application' 
+        message: 'Vous ne pouvez pas postuler à nouveau à un événement après vous être désinscrit' 
       });
       return;
     }
@@ -97,12 +97,12 @@ export const createApplication = async (req: AuthRequest, res: Response): Promis
     }
 
     res.status(201).json({
-      message: 'Application submitted successfully',
+      message: 'Candidature soumise avec succès',
       application
     });
   } catch (error) {
     console.error('Create application error:', error);
-    res.status(500).json({ message: 'Error submitting application' });
+    res.status(500).json({ message: 'Erreur lors de la soumission de la candidature' });
   }
 };
 
@@ -185,6 +185,20 @@ export const updateApplicationStatus = async (req: AuthRequest, res: Response): 
         comedian.stats.applicationsAccepted = (comedian.stats.applicationsAccepted || 0) + 1;
       } else if (newStatus !== 'ACCEPTED' && oldStatus === 'ACCEPTED') {
         comedian.stats.applicationsAccepted = Math.max(0, (comedian.stats.applicationsAccepted || 0) - 1);
+      }
+      
+      // Logique pour applicationsRejected
+      if (newStatus === 'REJECTED' && oldStatus !== 'REJECTED') {
+        comedian.stats.applicationsRejected = (comedian.stats.applicationsRejected || 0) + 1;
+      } else if (newStatus !== 'REJECTED' && oldStatus === 'REJECTED') {
+        comedian.stats.applicationsRejected = Math.max(0, (comedian.stats.applicationsRejected || 0) - 1);
+      }
+      
+      // Logique pour applicationsPending (quand le statut devient PENDING)
+      if (newStatus === 'PENDING' && oldStatus !== 'PENDING') {
+        comedian.stats.applicationsPending = (comedian.stats.applicationsPending || 0) + 1;
+      } else if (newStatus !== 'PENDING' && oldStatus === 'PENDING') {
+        comedian.stats.applicationsPending = Math.max(0, (comedian.stats.applicationsPending || 0) - 1);
       }
       comedian.markModified('stats');
       await comedian.save();
