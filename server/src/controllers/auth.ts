@@ -174,7 +174,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
     const users = await UserModel.find({ 
       role: { $in: ['COMEDIAN', 'ORGANIZER'] } 
     })
-    .select('-password +stats') // Exclure les mots de passe mais inclure les stats
+    .select('firstName lastName email phone role city createdAt stats profile organizerProfile') // Sélection explicite des champs
     .populate('profile')
     .populate('organizerProfile')
     .sort({ createdAt: -1 }); // Trier par date de création (plus récents en premier)
