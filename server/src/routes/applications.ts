@@ -175,6 +175,36 @@ router.put('/:applicationId/status', authMiddleware, validate(updateApplicationS
   res.json(updatedApplication);
 }));
 
+// Route pour confirmer la participation après modification d'événement (protégée)
+router.post('/:applicationId/confirm-participation', authMiddleware, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { applicationId } = req.params;
+  const comedianId = req.user?.id;
+
+  if (!comedianId) {
+    return res.status(401).json({ message: 'Utilisateur non authentifié' });
+  }
+
+  // Vérifier que la candidature existe et appartient au humoriste
+  const application = await ApplicationModel.findById(applicationId).populate('event');
+  if (!application) {
+    return res.status(404).json({ message: 'Candidature non trouvée' });
+  }
+
+  if (application.comedian.toString() !== comedianId) {
+    return res.status(403).json({ message: 'Non autorisé à confirmer cette candidature' });
+  }
+
+  // Marquer que l'humoriste a confirmé sa participation
+  // On peut ajouter un champ "confirmedParticipation" ou simplement reset modifiedByOrganizer
+  const event = await EventModel.findById(application.event);
+  if (event) {
+    event.modifiedByOrganizer = false; // Reset pour cacher les boutons
+    await event.save();
+  }
+
+  res.json({ message: 'Participation confirmée avec succès' });
+}));
+
 // Route pour supprimer une candidature (protégée)
 router.delete('/:applicationId', authMiddleware, asyncHandler(async (req: AuthRequest, res: Response) => {
   const { applicationId } = req.params;

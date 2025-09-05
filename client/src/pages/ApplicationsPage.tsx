@@ -513,7 +513,20 @@ function ApplicationsPage() {
                                 {user?.role === 'COMEDIAN' && wasEventUpdatedAfterApplication(app) && (new Date(app.event.date) >= todayMidnight) && (
                                   <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
                                     <button
-                                      onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); alert('Confirmation enregistrée.'); }}
+                                      onClick={async (e: React.MouseEvent<HTMLButtonElement>) => { 
+                                        e.stopPropagation(); 
+                                        try {
+                                          // Faire l'appel API pour confirmer la participation
+                                          const response = await api.post(`/applications/${app._id}/confirm-participation`);
+                                          if (response.status === 200) {
+                                            alert('Confirmation enregistrée. Les boutons vont disparaître.');
+                                            fetchApplications(); // Recharger pour cacher les boutons
+                                          }
+                                        } catch (error) {
+                                          console.error('Erreur confirmation:', error);
+                                          alert('Erreur lors de la confirmation. Veuillez réessayer.');
+                                        }
+                                      }}
                                       style={{ ...actionButtonStyle, backgroundColor: '#ff9800' }}
                                     >
                                       Je reste inscrit
