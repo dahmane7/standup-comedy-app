@@ -39,11 +39,30 @@ function ComedianDetailsModal({ isOpen, onClose, comedian }: ComedianDetailsModa
   const [loading, setLoading] = useState(false);
   const [loadingAbsences, setLoadingAbsences] = useState(false);
 
-  // Récupérer les vraies statistiques des candidatures
+  // Récupérer les vraies statistiques des candidatures ET les stats fraîches de l'humoriste
   useEffect(() => {
     if (isOpen && comedian?._id && token) {
       setLoading(true);
-      const fetchApplicationStats = async () => {
+      const fetchData = async () => {
+        try {
+          // 1. Récupérer les stats fraîches de l'humoriste depuis l'API
+          console.log('🔄 Récupération des stats fraîches pour:', comedian._id);
+          const userResponse = await api.get(`/auth/users`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          const userData = userResponse.data;
+          const users = Array.isArray(userData) ? userData : (userData.users || []);
+          const freshComedian = users.find((u: any) => u.id === comedian._id);
+          
+          if (freshComedian) {
+            console.log('✅ Stats fraîches récupérées:', freshComedian.stats);
+            setFreshComedianStats(freshComedian.stats);
+          }
+        } catch (error) {
+          console.error('❌ Erreur lors de la récupération des stats fraîches:', error);
+        }
+        
         try {
           console.log('🔍 DEBUT DEBUG - Récupération des candidatures pour:', {
             comedianId: comedian._id,
@@ -97,7 +116,7 @@ function ComedianDetailsModal({ isOpen, onClose, comedian }: ComedianDetailsModa
         }
       };
 
-      fetchApplicationStats();
+      fetchData();
     }
   }, [isOpen, comedian?._id, token]);
 
@@ -355,11 +374,11 @@ function ComedianDetailsModal({ isOpen, onClose, comedian }: ComedianDetailsModa
             }}>
               <h4 style={{ color: '#ff416c', marginBottom: '10px', fontSize: '1.1em' }}>🎭 Événements</h4>
               
-              {comedian.stats.totalEvents !== undefined && (
+              {((freshComedianStats?.totalEvents !== undefined) || (comedian.stats.totalEvents !== undefined)) && (
                 <div style={infoRowStyle}>
                   <span style={infoLabelStyle}>🎪 Participations:</span>
                   <span style={{ ...infoValueStyle, color: '#28a745', fontWeight: 'bold' }}>
-                    {comedian.stats.totalEvents || 0} événement{comedian.stats.totalEvents > 1 ? 's' : ''}
+                    {(freshComedianStats?.totalEvents || comedian.stats.totalEvents || 0)} événement{(freshComedianStats?.totalEvents || comedian.stats.totalEvents || 0) > 1 ? 's' : ''}
                   </span>
                 </div>
               )}
@@ -472,13 +491,13 @@ function ComedianDetailsModal({ isOpen, onClose, comedian }: ComedianDetailsModa
               )}
               
               {/* Taux de participation */}
-              {(comedian.stats.totalEvents !== undefined || comedian.stats?.absences !== undefined) && (
+              {((freshComedianStats?.totalEvents !== undefined) || (comedian.stats.totalEvents !== undefined) || (comedian.stats?.absences !== undefined)) && (
                 <div style={infoRowStyle}>
                   <span style={infoLabelStyle}>📊 Taux de participation:</span>
                   <span style={{ ...infoValueStyle, color: '#17a2b8', fontWeight: 'bold' }}>
                     {(() => {
-                      const participations = comedian.stats.totalEvents || 0;
-                      const absences = comedian.stats?.absences || 0;
+                      const participations = freshComedianStats?.totalEvents || comedian.stats.totalEvents || 0;
+                      const absences = freshComedianStats?.absences || comedian.stats?.absences || 0;
                       const total = participations + absences;
                       // Si aucune participation ni absence, retourner 0%
                       return total > 0 ? Math.round((participations / total) * 100) : 0;

@@ -1,5 +1,5 @@
 import { type CSSProperties, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
@@ -9,6 +9,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 function ComedianDashboardPage() {
   const { user, token, refreshUser } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (token) {
@@ -127,6 +128,8 @@ function ComedianDashboardPage() {
   const blinkingCardStyle: CSSProperties = {
     ...cardStyle,
     animation: 'greenBlink 2s infinite',
+    cursor: 'pointer',
+    transition: 'transform 0.2s ease',
   };
 
   const cardTitleStyle: CSSProperties = {
@@ -184,7 +187,12 @@ function ComedianDashboardPage() {
 
         <div style={cardsGridStyle}>
           {/* Carte: Événements à venir (SWAPPED) - Avec effet clignotant vert */}
-          <div style={blinkingCardStyle}>
+          <div 
+            style={blinkingCardStyle}
+            onClick={() => navigate('/my-events')}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
             <div>
               <p style={cardTitleStyle}>Événements à venir</p>
               <p style={cardValueStyle}>{upcomingCount}</p>
