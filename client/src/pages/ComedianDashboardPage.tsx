@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
 import { useQuery } from '@tanstack/react-query';
-// import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 function ComedianDashboardPage() {
   const { user, token, refreshUser } = useAuth();
@@ -56,9 +56,15 @@ function ComedianDashboardPage() {
     return eventTime >= nowTs;
   }).length : 0;
 
-  // Données pour le camembert (temporairement désactivé)
-  // const refusedCount = applications ? applications.filter((app: any) => app.status === 'REJECTED').length : 0;
-  // const pendingCount = applications ? applications.filter((app: any) => app.status === 'PENDING').length : 0;
+  // Données pour le camembert
+  const refusedCount = applications ? applications.filter((app: any) => app.status === 'REJECTED').length : 0;
+  const pendingCount = applications ? applications.filter((app: any) => app.status === 'PENDING').length : 0;
+  const pieData = [
+    { name: 'Acceptées', value: acceptedCount },
+    { name: 'En attente', value: pendingCount },
+    { name: 'Refusées', value: refusedCount },
+  ];
+  const PIE_COLORS = ['#28a745', '#ff9800', '#dc3545'];
 
   const mainContainerStyle: CSSProperties = {
     minHeight: '100vh',
@@ -212,6 +218,32 @@ function ComedianDashboardPage() {
               <p style={cardValueStyle}>{sentCount}</p>
             </div>
             <span style={{ fontSize: '2em', color: '#ff416c', alignSelf: 'flex-end' }}>📝</span>
+          </div>
+
+          {/* Carte: Répartition des candidatures */}
+          <div style={{ ...cardStyle, minHeight: '280px' }}>
+            <p style={cardTitleStyle}>Répartition des candidatures</p>
+            <div style={{ width: '100%', height: 200 }}>
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={70}
+                    label
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       </div>
