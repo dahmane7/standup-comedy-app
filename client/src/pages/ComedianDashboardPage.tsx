@@ -46,12 +46,16 @@ function ComedianDashboardPage() {
   const acceptedCount = applications ? applications.filter((app: any) => app.status === 'ACCEPTED').length : 0;
   const sentCount = applications ? applications.length : 0;
 
-  // Calcule le nombre d'événements à venir dynamiquement
-  const now = new Date();
+  // Calcule le nombre d'événements acceptés à venir (date >= aujourd'hui 00:00)
+  const todayMidnight = (() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  })();
   const upcomingCount = applications ? applications.filter((app: any) => {
-    if (app.status !== 'ACCEPTED' || !app.event) return false;
+    if (app.status !== 'ACCEPTED' || !app.event?.date) return false;
     const eventDate = new Date(app.event.date);
-    return eventDate >= now && (app.event.status === 'PUBLISHED' || app.event.status === 'DRAFT');
+    return eventDate >= todayMidnight;
   }).length : 0;
 
   // Données pour le camembert
