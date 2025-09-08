@@ -55,14 +55,9 @@ function ComedianDashboardPage() {
     return eventDate >= now && (app.event.status === 'PUBLISHED' || app.event.status === 'DRAFT');
   }).length : 0;
 
-  // Données pour le camembert
-  const refusedCount = applications ? applications.filter((app: any) => app.status === 'REJECTED').length : 0;
-  const pendingCount = applications ? applications.filter((app: any) => app.status === 'PENDING').length : 0;
-  const pieData = [
-    { name: 'Acceptées', value: acceptedCount, color: '#28a745' },
-    { name: 'Refusées', value: refusedCount, color: '#dc3545' },
-    { name: 'En cours', value: pendingCount, color: '#ffc107' },
-  ];
+  // Données pour le camembert (temporairement désactivé)
+  // const refusedCount = applications ? applications.filter((app: any) => app.status === 'REJECTED').length : 0;
+  // const pendingCount = applications ? applications.filter((app: any) => app.status === 'PENDING').length : 0;
 
   const mainContainerStyle: CSSProperties = {
     minHeight: '100vh',
@@ -218,31 +213,6 @@ function ComedianDashboardPage() {
             <span style={{ fontSize: '2em', color: '#ff416c', alignSelf: 'flex-end' }}>📝</span>
           </div>
         </div>
-        {/* Graphique temporairement désactivé */}
-        {/* 
-        <div style={{ maxWidth: 400, margin: '40px auto 0 auto', background: 'rgba(0,0,0,0.3)', borderRadius: 8, padding: 24 }}>
-          <h2 style={{ color: '#ff416c', textAlign: 'center', marginBottom: 16 }}>Répartition des Candidatures</h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie
-                data={pieData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-                label
-              >
-                {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-        */
       </div>
     </div>
   );
