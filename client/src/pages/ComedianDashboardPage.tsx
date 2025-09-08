@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
 import { useQuery } from '@tanstack/react-query';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+// import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 function ComedianDashboardPage() {
   const { user, token, refreshUser } = useAuth();
@@ -218,7 +218,8 @@ function ComedianDashboardPage() {
             <span style={{ fontSize: '2em', color: '#ff416c', alignSelf: 'flex-end' }}>📝</span>
           </div>
         </div>
-        {/* Ajout du camembert */}
+        {/* Graphique temporairement désactivé */}
+        {/* 
         <div style={{ maxWidth: 400, margin: '40px auto 0 auto', background: 'rgba(0,0,0,0.3)', borderRadius: 8, padding: 24 }}>
           <h2 style={{ color: '#ff416c', textAlign: 'center', marginBottom: 16 }}>Répartition des Candidatures</h2>
           <ResponsiveContainer width="100%" height={250}>
@@ -241,6 +242,7 @@ function ComedianDashboardPage() {
             </PieChart>
           </ResponsiveContainer>
         </div>
+        */
       </div>
     </div>
   );
