@@ -48,11 +48,12 @@ function ComedianDashboardPage() {
   const sentCount = applications ? applications.length : 0;
 
   // Calcule le nombre d'événements à venir dynamiquement
-  const now = new Date();
+  const nowTs = Date.now();
   const upcomingCount = applications ? applications.filter((app: any) => {
-    if (app.status !== 'ACCEPTED' || !app.event) return false;
-    const eventDate = new Date(app.event.date);
-    return eventDate >= now && (app.event.status === 'PUBLISHED' || app.event.status === 'DRAFT');
+    if (app.status !== 'ACCEPTED' || !app.event?.date) return false;
+    const eventTime = new Date(app.event.date).getTime();
+    // Compter les événements acceptés dont la date est dans le futur
+    return eventTime >= nowTs;
   }).length : 0;
 
   // Données pour le camembert (temporairement désactivé)
@@ -184,7 +185,7 @@ function ComedianDashboardPage() {
           {/* Carte: Événements à venir (SWAPPED) - Avec effet clignotant vert */}
           <div 
             style={blinkingCardStyle}
-            onClick={() => navigate('/my-events')}
+            onClick={() => navigate('/events')}
             onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
