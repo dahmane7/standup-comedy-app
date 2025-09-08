@@ -39,6 +39,14 @@ function ComedianDetailsModal({ isOpen, onClose, comedian }: ComedianDetailsModa
   const [loading, setLoading] = useState(false);
   const [loadingAbsences, setLoadingAbsences] = useState(false);
 
+  // Stats fraîches récupérées côté API pour refléter la réalité au moment de l'ouverture
+  type ComedianStats = {
+    totalEvents?: number;
+    absences?: number;
+    [key: string]: any;
+  };
+  const [freshComedianStats, setFreshComedianStats] = useState<ComedianStats | null>(null);
+
   // Récupérer les vraies statistiques des candidatures ET les stats fraîches de l'humoriste
   useEffect(() => {
     if (isOpen && comedian?._id && token) {
