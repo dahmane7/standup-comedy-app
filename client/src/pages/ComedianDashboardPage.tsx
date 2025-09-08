@@ -48,23 +48,21 @@ function ComedianDashboardPage() {
   const sentCount = applications ? applications.length : 0;
 
   // Calcule le nombre d'événements à venir dynamiquement
-  const nowTs = Date.now();
+  const now = new Date();
   const upcomingCount = applications ? applications.filter((app: any) => {
-    if (app.status !== 'ACCEPTED' || !app.event?.date) return false;
-    const eventTime = new Date(app.event.date).getTime();
-    // Compter les événements acceptés dont la date est dans le futur
-    return eventTime >= nowTs;
+    if (app.status !== 'ACCEPTED' || !app.event) return false;
+    const eventDate = new Date(app.event.date);
+    return eventDate >= now && (app.event.status === 'PUBLISHED' || app.event.status === 'DRAFT');
   }).length : 0;
 
   // Données pour le camembert
   const refusedCount = applications ? applications.filter((app: any) => app.status === 'REJECTED').length : 0;
   const pendingCount = applications ? applications.filter((app: any) => app.status === 'PENDING').length : 0;
   const pieData = [
-    { name: 'Acceptées', value: acceptedCount },
-    { name: 'En attente', value: pendingCount },
-    { name: 'Refusées', value: refusedCount },
+    { name: 'Acceptées', value: acceptedCount, color: '#28a745' },
+    { name: 'Refusées', value: refusedCount, color: '#dc3545' },
+    { name: 'En cours', value: pendingCount, color: '#ffc107' },
   ];
-  const PIE_COLORS = ['#28a745', '#ff9800', '#dc3545'];
 
   const mainContainerStyle: CSSProperties = {
     minHeight: '100vh',
@@ -191,7 +189,7 @@ function ComedianDashboardPage() {
           {/* Carte: Événements à venir (SWAPPED) - Avec effet clignotant vert */}
           <div 
             style={blinkingCardStyle}
-            onClick={() => navigate('/events')}
+            onClick={() => navigate('/my-events')}
             onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
@@ -219,32 +217,29 @@ function ComedianDashboardPage() {
             </div>
             <span style={{ fontSize: '2em', color: '#ff416c', alignSelf: 'flex-end' }}>📝</span>
           </div>
-
-          {/* Carte: Répartition des candidatures */}
-          <div style={{ ...cardStyle, minHeight: '280px' }}>
-            <p style={cardTitleStyle}>Répartition des candidatures</p>
-            <div style={{ width: '100%', height: 200 }}>
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={70}
-                    label
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+        </div>
+        {/* Ajout du camembert */}
+        <div style={{ maxWidth: 400, margin: '40px auto 0 auto', background: 'rgba(0,0,0,0.3)', borderRadius: 8, padding: 24 }}>
+          <h2 style={{ color: '#ff416c', textAlign: 'center', marginBottom: 16 }}>Répartition des Candidatures</h2>
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie
+                data={pieData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={80}
+                label
+              >
+                {pieData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>
