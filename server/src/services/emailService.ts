@@ -775,3 +775,41 @@ export const sendEventUpdatedNotificationToApplicants = async (
 
   await Promise.all(sendAll);
 };
+
+export const sendEventReminder = async (
+  comedian: { email: string; firstName?: string; lastName?: string },
+  event: { title: string; date: Date; location?: any; startTime?: string },
+  type: 'J-3' | 'J-1' | '-2H'
+) => {
+  const subjectMap = {
+    'J-3': `⏳ Rappel J-3: "${event.title}" approche !`,
+    'J-1': `📅 Rappel veille: "${event.title}" c'est demain`,
+    '-2H': `⏰ Rappel: "${event.title}" commence dans 2 heures`,
+  } as const;
+
+  const html = `
+  <div style="font-family: Arial, sans-serif; background: #f8f9fa; padding: 24px;">
+    <div style="max-width: 600px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); padding: 24px;">
+      <h2 style="margin-top:0;">${subjectMap[type]}</h2>
+      <p>Bonjour ${comedian.firstName || ''},</p>
+      <p>Vous êtes <b>accepté</b> pour l'événement <b>${event.title}</b>.</p>
+      <div style="margin: 16px 0; padding: 16px; background:#e3f2fd; border-left: 4px solid #2196f3; border-radius: 8px;">
+        <div><b>📅 Date:</b> ${new Date(event.date).toLocaleDateString('fr-FR')}</div>
+        ${event.startTime ? `<div><b>⏰ Heure:</b> ${event.startTime}</div>` : ''}
+        ${event.location ? `<div><b>📍 Lieu:</b> ${event.location.address || ''} ${event.location.city ? `- ${event.location.city}` : ''}</div>` : ''}
+      </div>
+      <p>Nous vous souhaitons une excellente performance !</p>
+      <div style="text-align:center; margin-top: 12px;">
+        <a href="https://standup-comedy-app.netlify.app/applications" style="display:inline-block;padding:12px 24px;background:#667eea;color:#fff;border-radius:24px;text-decoration:none;font-weight:bold">Voir mes candidatures</a>
+      </div>
+      <p style="color:#888; margin-top:16px;">Cet email est automatique. Merci de ne pas y répondre.</p>
+    </div>
+  </div>`;
+
+  await transporter.sendMail({
+    from: `Standup Comedy <${config.email.smtpUser}>`,
+    to: comedian.email,
+    subject: subjectMap[type],
+    html,
+  });
+};

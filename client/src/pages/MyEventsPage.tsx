@@ -160,9 +160,10 @@ function MyEventsPage() {
     return Array.from(organizersMap.values()).sort((a, b) => a.fullName.localeCompare(b.fullName));
   }, [fetchedEvents, user?.role]);
 
-  const { upcomingEvents, archivedEvents } = useMemo(() => {
+  const { upcomingEvents, archivedEvents, cancelledEvents } = useMemo(() => {
     const upcoming: IEvent[] = [];
     const archived: IEvent[] = [];
+    const cancelled: IEvent[] = [];
 
     if (fetchedEvents) {
       const eventsToFilter = fetchedEvents as IEvent[];
@@ -215,6 +216,12 @@ function MyEventsPage() {
       console.log(`📊 Total événements récupérés: ${filteredEvents.length}`);
       
       filteredEvents.forEach((event: IEvent) => {
+        // D'abord, isoler les événements annulés pour qu'ils n'apparaissent pas ailleurs
+        const isCancelled = (event.status === 'CANCELLED' || event.status === 'cancelled');
+        if (isCancelled) {
+          cancelled.push(event);
+          return;
+        }
         // Utilise la nouvelle logique avec endTime
         const eventIsPast = isEventPast(event.date, event.endTime);
         const eventDate = new Date(event.date);
@@ -242,6 +249,7 @@ function MyEventsPage() {
       console.log(`\n📈 RÉSULTAT CLASSIFICATION:`);
       console.log(`   • Événements à venir: ${upcoming.length}`);
       console.log(`   • Événements archivés: ${archived.length}`);
+      console.log(`   • Événements annulés: ${cancelled.length}`);
 
       if (dateFilter === 'upcoming') {
           archived.length = 0;
@@ -251,9 +259,10 @@ function MyEventsPage() {
 
       upcoming.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       archived.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      cancelled.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }
 
-    return { upcomingEvents: upcoming, archivedEvents: archived };
+    return { upcomingEvents: upcoming, archivedEvents: archived, cancelledEvents: cancelled };
   }, [fetchedEvents, location.search]);
 
   // Filtrer les événements archivés côté HUMORISTE: afficher uniquement ceux auxquels il a postulé
@@ -388,6 +397,25 @@ function MyEventsPage() {
         refreshUser();
       } catch (err: any) {
         console.error('Erreur lors de la suppression de l\'événement:', err.response?.data || err.message);
+      }
+    }
+  };
+
+  const handleCancelEvent = async (eventId: string) => {
+    if (window.confirm("Confirmer l'annulation de cet événement ?")) {
+      try {
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        };
+        await api.put(`/events/${eventId}`, { status: 'cancelled' }, config);
+        alert("Événement annulé avec succès !");
+        refetch();
+        refreshUser();
+      } catch (err: any) {
+        console.error("Erreur lors de l'annulation de l'événement:", err.response?.data || err.message);
+        alert('Erreur: ' + (err.response?.data?.message || err.message));
       }
     }
   };
@@ -964,6 +992,12 @@ function MyEventsPage() {
                   Modifier
                 </button>
                 <button 
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleCancelEvent(event._id); }}
+                  style={{ ...actionButtonStyleSmall, backgroundColor: '#6c757d' }}
+                >
+                  Annuler
+                </button>
+                <button 
                   onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleDeleteEvent(event._id); }}
                   style={deleteButtonStyle}
                 >
@@ -1242,6 +1276,35 @@ function MyEventsPage() {
           />
         )}
       </Modal>
+
+      {/* Section Événements annulés (organisateur et super admin) */}
+      {user?.role !== 'COMEDIAN' && (
+        <div style={sectionStyle}>
+          <h2 style={sectionTitleStyle}>Événements annulés</h2>
+          {eventsLoading && <p style={emptyStateStyle}>Chargement des événements...</p>}
+          {eventsError && <p style={{ ...emptyStateStyle, color: '#dc3545' }}>Erreur: {eventsErrorMessage?.message}</p>}
+          {!eventsLoading && !eventsError && cancelledEvents.length === 0 && (
+            <p style={emptyStateStyle}>Aucun événement annulé.</p>
+          )}
+          {cancelledEvents.map((event) => (
+            <div key={event._id} style={eventCardStyle} onClick={() => handleCardClick(event)}>
+              <h3 style={eventTitleStyle}>{event.title}</h3>
+              <p style={eventDetailStyle}>Date: {new Date(event.date).toLocaleDateString()}</p>
+              <p style={eventDetailStyle}>Lieu: {(() => {
+                const location = event.location;
+                if (typeof location === 'object' && location !== null) {
+                  const address = location.address || '';
+                  const city = location.city || '';
+                  return `${address}${address && city ? ', ' : ''}${city}`.trim() || 'Lieu non spécifié';
+                }
+                return 'Lieu non spécifié';
+              })()}</p>
+              <p style={eventDetailStyle}>Organisateur: {event.organizer.firstName} {event.organizer.lastName}</p>
+              <p style={{ ...eventStatusStyle, color: '#dc3545' }}>Statut: Annulé</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {showApplyEventForm && user?.role === 'COMEDIAN' && selectedEvent && (
         <ApplyToEventForm

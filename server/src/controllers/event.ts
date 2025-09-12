@@ -277,6 +277,8 @@ export const getEventStats = async (req: AuthRequest, res: Response) => {
         new Date(event.date) < now || event.status === 'completed'
       ).length;
 
+      const cancelledEvents = allEvents.filter(event => event.status === 'cancelled').length;
+
       console.log('📊 Statistiques globales calculées:', {
         totalEvents,
         pendingApplications,
@@ -290,6 +292,7 @@ export const getEventStats = async (req: AuthRequest, res: Response) => {
         totalEvents, 
         upcomingIncompleteEvents, 
         completedEvents, 
+        cancelledEvents,
         pendingApplications, 
         acceptedApplications, 
         rejectedApplications 
@@ -321,7 +324,9 @@ export const getEventStats = async (req: AuthRequest, res: Response) => {
       new Date(event.date) < now || event.status === 'completed'
     ).length;
 
-    res.status(200).json({ totalEvents, upcomingIncompleteEvents, completedEvents, pendingApplications, acceptedApplications, rejectedApplications });
+    const cancelledEvents = allEvents.filter(event => event.status === 'cancelled').length;
+
+    res.status(200).json({ totalEvents, upcomingIncompleteEvents, completedEvents, cancelledEvents, pendingApplications, acceptedApplications, rejectedApplications });
   } catch (err) {
     console.error('Error fetching event stats:', err);
     res.status(500).json({ error: 'Internal server error' });

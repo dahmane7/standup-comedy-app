@@ -8,6 +8,7 @@ interface EventStats {
   totalEvents: number;
   upcomingIncompleteEvents: number;
   completedEvents: number;
+  cancelledEvents?: number;
   pendingApplications: number;
   acceptedApplications: number;
   rejectedApplications: number;
@@ -283,6 +284,18 @@ const Dashboard = () => {
               <p style={cardValueStyle}>{eventStats?.completedEvents || 0}</p>
             </div>
             <span style={cardIconStyle}>📦</span>
+          </div>
+
+          {/* Carte : Événements annulés */}
+          <div 
+            style={{ ...cardStyle, cursor: 'pointer' }} 
+            onClick={() => navigate('/events?status=CANCELLED')}
+          >
+            <div>
+              <p style={cardTitleStyle}>Événements annulés</p>
+              <p style={cardValueStyle}>{eventStats?.cancelledEvents || 0}</p>
+            </div>
+            <span style={cardIconStyle}>🛑</span>
           </div>
 
           {/* Carte de traitement automatique pour Super Admin uniquement */}

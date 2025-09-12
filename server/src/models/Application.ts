@@ -8,6 +8,11 @@ export interface ApplicationDocument extends Document {
   performanceDetails?: PerformanceDetails;
   message?: string;
   organizerMessage?: string;
+  reminders?: {
+    j3Sent?: boolean;
+    j1Sent?: boolean;
+    h2Sent?: boolean;
+  };
 }
 
 const performanceDetailsSchema = new Schema<PerformanceDetails>({
@@ -43,6 +48,11 @@ const applicationSchema = new Schema<ApplicationDocument>({
   organizerMessage: {
     type: String,
     required: false
+  },
+  reminders: {
+    j3Sent: { type: Boolean, default: false },
+    j1Sent: { type: Boolean, default: false },
+    h2Sent: { type: Boolean, default: false }
   }
 }, {
   timestamps: true
