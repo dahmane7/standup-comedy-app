@@ -50,6 +50,7 @@ const DirectoryPage: React.FC = () => {
   } | null>(null);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [organizerCancelledCount, setOrganizerCancelledCount] = useState<number>(0);
   const { user } = useAuth();
 
   // Styles
@@ -238,6 +239,26 @@ const DirectoryPage: React.FC = () => {
     setSelectedUser(userData);
     setIsStatsModalOpen(true);
   };
+
+  // Charger le nombre d'événements annulés pour l'organisateur sélectionné
+  useEffect(() => {
+    const fetchCancelledForOrganizer = async () => {
+      try {
+        if (!isStatsModalOpen || !selectedUser || selectedUser.role !== 'ORGANIZER') {
+          setOrganizerCancelledCount(0);
+          return;
+        }
+        const res = await api.get(`/events?organizerId=${selectedUser.id}`);
+        const events = Array.isArray(res.data) ? res.data : (res.data?.events || []);
+        const cancelled = events.filter((e: any) => e.status === 'cancelled' || e.status === 'CANCELLED').length;
+        setOrganizerCancelledCount(cancelled);
+      } catch (err) {
+        console.error('Erreur récupération événements organisateur:', err);
+        setOrganizerCancelledCount(0);
+      }
+    };
+    fetchCancelledForOrganizer();
+  }, [isStatsModalOpen, selectedUser]);
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -759,12 +780,12 @@ const DirectoryPage: React.FC = () => {
                     <div style={{ fontSize: '12px', color: '#2e7d32' }}>Note moyenne</div>
                   </div>
 
-                  <div style={{ padding: '20px', backgroundColor: '#f3e5f5', borderRadius: '8px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>👁️</div>
-                    <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#9c27b0', marginBottom: '5px' }}>
-                      {selectedUser.stats?.profileViews || 0}
+                  <div style={{ padding: '20px', backgroundColor: '#ffebee', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>🛑</div>
+                    <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#e53935', marginBottom: '5px' }}>
+                      {organizerCancelledCount}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#7b1fa2' }}>Vues du profil</div>
+                    <div style={{ fontSize: '12px', color: '#c62828' }}>Événements annulés</div>
                   </div>
                 </div>
               </div>
