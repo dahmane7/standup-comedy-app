@@ -160,6 +160,23 @@ const Dashboard = () => {
     opacity: 0.7,
   };
 
+  // Indicateur clignotant (point) en haut à droite de la carte
+  const makeBlinkDotStyle = (color: string): CSSProperties => ({
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 12,
+    height: 12,
+    borderRadius: '50%',
+    backgroundColor: color,
+    boxShadow: `0 0 10px ${color}`,
+    animation: 'blink 1s infinite',
+  });
+
+  const openExternalEvents = () => {
+    window.location.href = 'https://standup-comedy-app.netlify.app/events';
+  };
+
   if (!user || loading) {
     return (
       <div style={mainContainerStyle}>
@@ -210,23 +227,25 @@ const Dashboard = () => {
         <h1 style={dashboardHeaderStyle}>{dashboardTitle}</h1>
         
         <div style={cardsGridStyle}>
-          {/* Carte : Événements créés */}
+          {/* 1 - Événements complets (clignotant vert) → lien externe */}
           <div 
             style={{ ...cardStyle, cursor: 'pointer' }} 
-            onClick={() => navigate('/events?status=ALL')}
+            onClick={openExternalEvents}
           >
+            <span style={makeBlinkDotStyle('#22c55e')} />
             <div>
-              <p style={cardTitleStyle}>Événements créés</p>
-              <p style={cardValueStyle}>{eventStats?.totalEvents || 0}</p>
+              <p style={cardTitleStyle}>Événements complets</p>
+              <p style={cardValueStyle}>{eventStats?.completedEvents || 0}</p>
             </div>
-            <span style={cardIconStyle}>🎪</span>
+            <span style={cardIconStyle}>✅</span>
           </div>
 
-          {/* Carte : Candidatures en attente */}
+          {/* 2 - Candidatures en attente (clignotant orange) */}
           <div 
             style={{ ...cardStyle, cursor: 'pointer' }} 
             onClick={() => navigate('/applications')}
           >
+            <span style={makeBlinkDotStyle('#f59e0b')} />
             <div>
               <p style={cardTitleStyle}>Candidatures en attente</p>
               <p style={cardValueStyle}>{eventStats?.pendingApplications || 0}</p>
@@ -234,7 +253,20 @@ const Dashboard = () => {
             <span style={cardIconStyle}>⏳</span>
           </div>
 
-          {/* Carte : Humoristes postulants */}
+          {/* 3 - Prochains événements (non complets) (clignotant rouge) → lien externe */}
+          <div 
+            style={{ ...cardStyle, cursor: 'pointer' }} 
+            onClick={openExternalEvents}
+          >
+            <span style={makeBlinkDotStyle('#ef4444')} />
+            <div>
+              <p style={cardTitleStyle}>Prochains événements<br/>(non complets)</p>
+              <p style={cardValueStyle}>{eventStats?.upcomingIncompleteEvents || 0}</p>
+            </div>
+            <span style={cardIconStyle}>✨</span>
+          </div>
+
+          {/* 4 - Humoristes postulants */}
           <div 
             style={{ ...cardStyle, cursor: 'pointer' }} 
             onClick={() => navigate('/applications')}
@@ -250,34 +282,22 @@ const Dashboard = () => {
             <span style={cardIconStyle}>👥</span>
           </div>
 
-          {/* Carte : Prochains événements (non complets) */}
+          {/* 5 - Événements créés → lien externe */}
           <div 
             style={{ ...cardStyle, cursor: 'pointer' }} 
-            onClick={() => navigate('/events?status=UPCOMING&incomplete=true')}
+            onClick={openExternalEvents}
           >
             <div>
-              <p style={cardTitleStyle}>Prochains événements<br/>(non complets)</p>
-              <p style={cardValueStyle}>{eventStats?.upcomingIncompleteEvents || 0}</p>
+              <p style={cardTitleStyle}>Événements créés</p>
+              <p style={cardValueStyle}>{eventStats?.totalEvents || 0}</p>
             </div>
-            <span style={cardIconStyle}>✨</span>
+            <span style={cardIconStyle}>🎪</span>
           </div>
 
-          {/* Carte : Événements complets */}
+          {/* 6 - Événements archivés → lien externe */}
           <div 
             style={{ ...cardStyle, cursor: 'pointer' }} 
-            onClick={() => navigate('/events?status=COMPLETED&date=past')}
-          >
-            <div>
-              <p style={cardTitleStyle}>Événements complets</p>
-              <p style={cardValueStyle}>{eventStats?.completedEvents || 0}</p>
-            </div>
-            <span style={cardIconStyle}>✅</span>
-          </div>
-
-          {/* Carte : Événements archivés */}
-          <div 
-            style={{ ...cardStyle, cursor: 'pointer' }} 
-            onClick={() => navigate('/events?status=COMPLETED&date=past')}
+            onClick={openExternalEvents}
           >
             <div>
               <p style={cardTitleStyle}>Événements archivés</p>
@@ -286,10 +306,10 @@ const Dashboard = () => {
             <span style={cardIconStyle}>📦</span>
           </div>
 
-          {/* Carte : Événements annulés */}
+          {/* 7 - Événements annulés → lien externe */}
           <div 
             style={{ ...cardStyle, cursor: 'pointer' }} 
-            onClick={() => navigate('/events?status=CANCELLED')}
+            onClick={openExternalEvents}
           >
             <div>
               <p style={cardTitleStyle}>Événements annulés</p>
@@ -377,6 +397,10 @@ const Dashboard = () => {
           @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
+          }
+          @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
           }
         `}
       </style>
