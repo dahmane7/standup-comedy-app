@@ -160,18 +160,24 @@ const Dashboard = () => {
     opacity: 0.7,
   };
 
-  // Indicateur clignotant (point) en haut à droite de la carte
-  const makeBlinkDotStyle = (color: string): CSSProperties => ({
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 12,
-    height: 12,
-    borderRadius: '50%',
-    backgroundColor: color,
-    boxShadow: `0 0 10px ${color}`,
-    animation: 'blink 1s infinite',
-  });
+  // Styles de cartes avec lueur/clignotement (vert/orange/rouge)
+  const glowingCardGreenStyle: CSSProperties = {
+    border: '1px solid rgba(34, 197, 94, 0.6)',
+    boxShadow: '0 0 0 rgba(34, 197, 94, 0)',
+    animation: 'glowGreen 1.8s ease-in-out infinite',
+  };
+
+  const glowingCardOrangeStyle: CSSProperties = {
+    border: '1px solid rgba(245, 158, 11, 0.6)',
+    boxShadow: '0 0 0 rgba(245, 158, 11, 0)',
+    animation: 'glowOrange 1.8s ease-in-out infinite',
+  };
+
+  const glowingCardRedStyle: CSSProperties = {
+    border: '1px solid rgba(239, 68, 68, 0.6)',
+    boxShadow: '0 0 0 rgba(239, 68, 68, 0)',
+    animation: 'glowRed 1.8s ease-in-out infinite',
+  };
 
   const openExternalEvents = () => {
     window.location.href = 'https://standup-comedy-app.netlify.app/events';
@@ -227,12 +233,11 @@ const Dashboard = () => {
         <h1 style={dashboardHeaderStyle}>{dashboardTitle}</h1>
         
         <div style={cardsGridStyle}>
-          {/* 1 - Événements complets (clignotant vert) → lien externe */}
+          {/* 1 - Événements complets (carte clignotante verte) → lien externe */}
           <div 
-            style={{ ...cardStyle, cursor: 'pointer' }} 
+            style={{ ...cardStyle, ...glowingCardGreenStyle, cursor: 'pointer' }} 
             onClick={openExternalEvents}
           >
-            <span style={makeBlinkDotStyle('#22c55e')} />
             <div>
               <p style={cardTitleStyle}>Événements complets</p>
               <p style={cardValueStyle}>{eventStats?.completedEvents || 0}</p>
@@ -240,12 +245,11 @@ const Dashboard = () => {
             <span style={cardIconStyle}>✅</span>
           </div>
 
-          {/* 2 - Candidatures en attente (clignotant orange) */}
+          {/* 2 - Candidatures en attente (carte clignotante orange) */}
           <div 
-            style={{ ...cardStyle, cursor: 'pointer' }} 
+            style={{ ...cardStyle, ...glowingCardOrangeStyle, cursor: 'pointer' }} 
             onClick={() => navigate('/applications')}
           >
-            <span style={makeBlinkDotStyle('#f59e0b')} />
             <div>
               <p style={cardTitleStyle}>Candidatures en attente</p>
               <p style={cardValueStyle}>{eventStats?.pendingApplications || 0}</p>
@@ -253,12 +257,11 @@ const Dashboard = () => {
             <span style={cardIconStyle}>⏳</span>
           </div>
 
-          {/* 3 - Prochains événements (non complets) (clignotant rouge) → lien externe */}
+          {/* 3 - Prochains événements (non complets) (carte clignotante rouge) → lien externe */}
           <div 
-            style={{ ...cardStyle, cursor: 'pointer' }} 
+            style={{ ...cardStyle, ...glowingCardRedStyle, cursor: 'pointer' }} 
             onClick={openExternalEvents}
           >
-            <span style={makeBlinkDotStyle('#ef4444')} />
             <div>
               <p style={cardTitleStyle}>Prochains événements<br/>(non complets)</p>
               <p style={cardValueStyle}>{eventStats?.upcomingIncompleteEvents || 0}</p>
@@ -398,9 +401,17 @@ const Dashboard = () => {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
           }
-          @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.2; }
+          @keyframes glowGreen {
+            0%, 100% { box-shadow: 0 0 0 rgba(34, 197, 94, 0); }
+            50% { box-shadow: 0 0 24px 6px rgba(34, 197, 94, 0.5); }
+          }
+          @keyframes glowOrange {
+            0%, 100% { box-shadow: 0 0 0 rgba(245, 158, 11, 0); }
+            50% { box-shadow: 0 0 24px 6px rgba(245, 158, 11, 0.5); }
+          }
+          @keyframes glowRed {
+            0%, 100% { box-shadow: 0 0 0 rgba(239, 68, 68, 0); }
+            50% { box-shadow: 0 0 24px 6px rgba(239, 68, 68, 0.5); }
           }
         `}
       </style>
