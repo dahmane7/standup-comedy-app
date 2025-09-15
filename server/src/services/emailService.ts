@@ -813,3 +813,42 @@ export const sendEventReminder = async (
     html,
   });
 };
+
+// Notifier les participants d'un événement annulé (avec raison)
+export const sendEventCancellationToParticipants = async (
+  participants: Array<{ email: string; firstName?: string; lastName?: string }>,
+  event: { title: string; date: Date; location?: any },
+  organizer: { firstName: string; lastName: string; email: string },
+  cancellationReason?: string
+) => {
+  if (!participants || participants.length === 0) return;
+
+  const subject = `🛑 Événement annulé: "${event.title}"`;
+
+  const sends = participants
+    .filter(p => !!p.email)
+    .map(p => {
+      const html = `
+      <div style="font-family: Arial, sans-serif; background:#f8f9fa; padding:24px;">
+        <div style="max-width: 600px; margin:auto; background:white; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.06); padding:24px;">
+          <h2 style="margin-top:0;color:#dc3545;">🛑 Événement annulé</h2>
+          <p>Bonjour ${p.firstName || ''}${p.lastName ? ' ' + p.lastName : ''},</p>
+          <p>L'événement <b>${event.title}</b> prévu le <b>${new Date(event.date).toLocaleDateString('fr-FR')}</b> a été <b>annulé</b> par <b>${organizer.firstName} ${organizer.lastName}</b>.</p>
+          ${event.location ? `<p><b>Lieu:</b> ${event.location.address || ''} ${event.location.city ? ' - ' + event.location.city : ''}</p>` : ''}
+          ${cancellationReason ? `<div style="margin:16px 0; padding:12px; background:#fff3cd; border-left:4px solid #ffc107; border-radius:8px;"><b>Raison fournie:</b><br/><i>${cancellationReason}</i></div>` : ''}
+          <p>Nous vous remercions pour votre compréhension.</p>
+          <p style="color:#888; margin-top:16px; font-size:0.95em;">Cet email est automatique. Merci de ne pas y répondre.</p>
+        </div>
+      </div>`;
+
+      return transporter.sendMail({
+        from: `"${organizer.firstName} ${organizer.lastName}" <${config.email.smtpUser}>`,
+        replyTo: organizer.email,
+        to: p.email,
+        subject,
+        html,
+      });
+    });
+
+  await Promise.all(sends);
+};

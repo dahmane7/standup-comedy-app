@@ -15,4 +15,5 @@ export interface IEvent {
   applications: string[];
   participants: IUserData[];
   maxParticipants: number;
+  cancellationReason?: string;
 } 

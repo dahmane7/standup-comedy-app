@@ -36,6 +36,9 @@ function MyEventsPage() {
   const [selectedAbsenceParticipant, setSelectedAbsenceParticipant] = useState<any>(null);
   const [eventAbsences, setEventAbsences] = useState<any[]>([]);
   const [completionFilter, setCompletionFilter] = useState<'all' | 'complete' | 'incomplete'>('all');
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [eventToCancel, setEventToCancel] = useState<IEvent | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -383,40 +386,51 @@ function MyEventsPage() {
     queryClient.invalidateQueries({ queryKey: ['comedianApplications'] }); // Force refresh des candidatures humoriste
   };
 
-  const handleDeleteEvent = async (eventId: string) => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer cet événement ?")) {
-      try {
-        const config = {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        };
-        await api.delete(`/events/${eventId}`, config);
-        alert("Événement supprimé avec succès !");
-        refetch();
-        refreshUser();
-      } catch (err: any) {
-        console.error('Erreur lors de la suppression de l\'événement:', err.response?.data || err.message);
-      }
-    }
+  
+
+  const openCancelModal = (event: IEvent) => {
+    setEventToCancel(event);
+    setCancelReason('');
+    setShowCancelModal(true);
   };
 
-  const handleCancelEvent = async (eventId: string) => {
-    if (window.confirm("Confirmer l'annulation de cet événement ?")) {
-      try {
+  const confirmCancelEvent = async () => {
+    if (!eventToCancel) return;
+    try {
+      const now = new Date();
+      const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const eventDate = new Date(eventToCancel.date);
+      const eventMidnight = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+      const diffMs = eventMidnight.getTime() - todayMidnight.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+      // Raison obligatoire si < 10 jours
+      if (diffDays < 10 && !cancelReason.trim()) {
+        alert('Veuillez fournir une raison d\'annulation (événement dans moins de 10 jours).');
+        return;
+      }
+
+      if (diffDays < 10) {
         const config = {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         };
-        await api.put(`/events/${eventId}`, { status: 'cancelled' }, config);
-        alert("Événement annulé avec succès !");
+        // Envoi du statut annulé; la raison est transmise si supportée par l'API
+        await api.put(`/events/${eventToCancel._id}`, { status: 'cancelled', cancellationReason: cancelReason }, config);
+        alert('Événement annulé et déplacé vers "Événements annulés".');
         refetch();
         refreshUser();
-      } catch (err: any) {
-        console.error("Erreur lors de l'annulation de l'événement:", err.response?.data || err.message);
-        alert('Erreur: ' + (err.response?.data?.message || err.message));
+      } else {
+        alert('Événement non déplacé vers "Événements annulés" (plus de 10 jours avant).');
       }
+    } catch (err: any) {
+      console.error("Erreur lors de l'annulation de l'événement:", err.response?.data || err.message);
+      alert('Erreur: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setShowCancelModal(false);
+      setEventToCancel(null);
+      setCancelReason('');
     }
   };
 
@@ -992,17 +1006,14 @@ function MyEventsPage() {
                   Modifier
                 </button>
                 <button 
-                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleCancelEvent(event._id); }}
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); openCancelModal(event); }}
+                <button 
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); openCancelModal(event); }}
                   style={{ ...actionButtonStyleSmall, backgroundColor: '#6c757d' }}
                 >
                   Annuler
                 </button>
-                <button 
-                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleDeleteEvent(event._id); }}
-                  style={deleteButtonStyle}
-                >
-                  Supprimer
-                </button>
+                
               </div>
             )}
           </div>
@@ -1095,12 +1106,7 @@ function MyEventsPage() {
                 >
                   Modifier
                 </button>
-                <button 
-                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleDeleteEvent(event._id); }}
-                  style={deleteButtonStyle}
-                >
-                  Supprimer
-                </button>
+                
               </div>
             )}
             </div>
@@ -1130,6 +1136,12 @@ function MyEventsPage() {
             <p style={modalDetailStyle}><span style={modalLabelStyle}>Organisateur:</span> <span style={modalValueStyle}>{selectedEvent.organizer.firstName} {selectedEvent.organizer.lastName}</span></p>
             <p style={modalDetailStyle}><span style={modalLabelStyle}>Email:</span> <span style={modalValueStyle}>{selectedEvent.organizer.email}</span></p>
             <p style={modalDetailStyle}><span style={modalLabelStyle}>Statut:</span> <span style={modalValueStyle}>{translateEventStatus(selectedEvent.status)}</span></p>
+            {selectedEvent.status.toLowerCase() === 'cancelled' && selectedEvent.cancellationReason && (
+              <p style={modalDetailStyle}>
+                <span style={modalLabelStyle}>Raison de l'annulation:</span> 
+                <span style={modalValueStyle}>{selectedEvent.cancellationReason}</span>
+              </p>
+            )}
             
             <h3 style={{ ...modalLabelStyle, fontSize: '1.2em', marginTop: '20px', color: '#28a745' }}>Exigences:</h3>
             <p style={modalDetailStyle}><span style={modalLabelStyle}>Expérience Minimale:</span> <span style={modalValueStyle}>{selectedEvent.requirements.minExperience} ans</span></p>
@@ -1301,6 +1313,11 @@ function MyEventsPage() {
               })()}</p>
               <p style={eventDetailStyle}>Organisateur: {event.organizer.firstName} {event.organizer.lastName}</p>
               <p style={{ ...eventStatusStyle, color: '#dc3545' }}>Statut: Annulé</p>
+              {event.cancellationReason && (
+                <p style={{ ...eventDetailStyle, marginTop: 6 }}>
+                  <span style={{ fontWeight: 'bold', color: '#ff4b2b' }}>Raison:</span> {event.cancellationReason}
+                </p>
+              )}
             </div>
           ))}
         </div>
@@ -1339,6 +1356,39 @@ function MyEventsPage() {
         onMarkAbsent={handleMarkAbsent}
         onCancelAbsence={handleCancelAbsence}
       />
+
+      {/* Modal d'annulation d'événement avec raison */}
+      <Modal isOpen={showCancelModal} onClose={() => setShowCancelModal(false)} title="Annuler l'événement">
+        <div>
+          <p style={{ marginBottom: 12, color: '#ddd' }}>
+            {(() => {
+              if (!eventToCancel) return "";
+              const now = new Date();
+              const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+              const eventDate = new Date(eventToCancel.date);
+              const eventMidnight = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+              const diffDays = Math.ceil((eventMidnight.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24));
+              return diffDays < 10
+                ? "Veuillez indiquer la raison de l'annulation (obligatoire car l'événement est dans moins de 10 jours)."
+                : "Vous pouvez indiquer une raison (facultatif).";
+            })()}
+          </p>
+          <textarea
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+            placeholder="Raison de l'annulation"
+            style={{ width: '100%', minHeight: 80, padding: 10, borderRadius: 6, border: '1px solid #555', background: 'rgba(0,0,0,0.4)', color: '#fff' }}
+          />
+          <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+            <button onClick={() => setShowCancelModal(false)} style={{ ...actionButtonStyleSmall, backgroundColor: '#6c757d' }}>
+              Fermer
+            </button>
+            <button onClick={confirmCancelEvent} style={{ ...actionButtonStyleSmall, background: 'linear-gradient(to right, #ff416c, #ff4b2b)' }}>
+              Confirmer l'annulation
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

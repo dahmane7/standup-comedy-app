@@ -62,6 +62,8 @@ export const updateEventSchema = z.object({
   }, z.date()).optional(),
   location: updateLocationSchema.optional(),
   requirements: requirementsSchema.partial().optional(),
+  status: z.enum(['draft', 'published', 'cancelled', 'completed']).optional(),
+  cancellationReason: z.string().max(1000).optional(),
 }).partial();
 
 // Schéma de validation pour les candidatures

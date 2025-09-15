@@ -15,6 +15,7 @@ export interface EventDocument extends Document {
   startTime?: string;
   endTime?: string;
   modifiedByOrganizer?: boolean;
+  cancellationReason?: string;
 }
 
 const locationSchema = new Schema<Location>({
@@ -87,6 +88,10 @@ const eventSchema = new Schema<EventDocument>({
   modifiedByOrganizer: {
     type: Boolean,
     default: false
+  },
+  cancellationReason: {
+    type: String,
+    required: false
   }
 }, {
   timestamps: true

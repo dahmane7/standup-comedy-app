@@ -4,7 +4,7 @@ import { UserModel } from '../models/User';
 import { AuthRequest } from '../middleware/auth';
 import mongoose from 'mongoose';
 import { ApplicationModel } from '../models/Application';
-import { sendNewEventNotificationToHumorists, sendEventUpdatedNotificationToApplicants } from '../services/emailService';
+import { sendNewEventNotificationToHumorists, sendEventUpdatedNotificationToApplicants, sendEventCancellationToParticipants } from '../services/emailService';
 
 export const createEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -147,11 +147,28 @@ export const updateEvent = async (req: AuthRequest, res: Response): Promise<void
       const organizer = await UserModel.findById(organizerId).select('firstName lastName email');
       console.log(`📧 [DEBUG] Candidatures ciblées: ${applications.length}`);
       if (organizer && applications.length > 0) {
-        sendEventUpdatedNotificationToApplicants(applications as any, updatedEvent, {
-          firstName: organizer.firstName,
-          lastName: organizer.lastName,
-          email: organizer.email,
-        }).catch(err => console.error('❌ Erreur envoi emails maj événement:', err));
+        // Si l'événement est annulé, informer les candidats ACCEPTED et PENDING
+        if (req.body.status === 'cancelled' || updatedEvent.status === 'cancelled') {
+          const affectedApplications = await ApplicationModel.find({ 
+            event: updatedEvent._id, 
+            status: { $in: ['PENDING', 'ACCEPTED'] }
+          }).populate('comedian', 'email firstName lastName');
+          const participants = affectedApplications
+            .map((app: any) => app.comedian)
+            .filter((c: any) => !!c?.email);
+          await sendEventCancellationToParticipants(participants as any, updatedEvent as any, {
+            firstName: organizer.firstName,
+            lastName: organizer.lastName,
+            email: organizer.email,
+          }, (req.body as any).cancellationReason);
+        } else {
+          // Sinon, envoyer une notification de mise à jour classique
+          sendEventUpdatedNotificationToApplicants(applications as any, updatedEvent, {
+            firstName: organizer.firstName,
+            lastName: organizer.lastName,
+            email: organizer.email,
+          }).catch(err => console.error('❌ Erreur envoi emails maj événement:', err));
+        }
       } else {
         console.log('ℹ️ [DEBUG] Aucun destinataire email trouvé ou organisateur introuvable.');
       }
