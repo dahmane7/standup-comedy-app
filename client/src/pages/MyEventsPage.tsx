@@ -1007,8 +1007,6 @@ function MyEventsPage() {
                 </button>
                 <button 
                   onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); openCancelModal(event); }}
-                <button 
-                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); openCancelModal(event); }}
                   style={{ ...actionButtonStyleSmall, backgroundColor: '#6c757d' }}
                 >
                   Annuler
