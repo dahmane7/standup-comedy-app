@@ -388,10 +388,36 @@ function MyEventsPage() {
 
   
 
-  const openCancelModal = (event: IEvent) => {
-    setEventToCancel(event);
-    setCancelReason('');
-    setShowCancelModal(true);
+  const openCancelModal = async (event: IEvent) => {
+    try {
+      const now = new Date();
+      const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const eventDate = new Date(event.date);
+      const eventMidnight = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+      const diffDays = Math.ceil((eventMidnight.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (diffDays >= 10) {
+        const proceed = window.confirm('Confirmer la suppression de cet événement (plus de 10 jours avant) ?');
+        if (!proceed) return;
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        } as const;
+        await api.delete(`/events/${event._id}`, config);
+        alert('Événement supprimé avec succès.');
+        refetch();
+        refreshUser();
+        return;
+      }
+
+      setEventToCancel(event);
+      setCancelReason('');
+      setShowCancelModal(true);
+    } catch (error: any) {
+      console.error('Erreur lors de la suppression de l\'événement:', error.response?.data || error.message);
+      alert('Erreur: ' + (error.response?.data?.message || error.message));
+    }
   };
 
   const confirmCancelEvent = async () => {
